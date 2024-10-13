@@ -1,0 +1,89 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\lstset{
+    backgroundcolor=\color{lightgray},
+    basicstyle=\ttfamily,
+    breaklines=true
+}
+
+\title{quantum optimization for climate data assimilation}
+\author{Brian Recktenwall-Calvet}
+\date{October 2024}
+\begin{document}
+\maketitle
+\section{Problem Formulation}
+
+\subsection{Variables}
+Let \( \mathbf{dx}^k \) represent the analysis increment at iteration \( k \), where \( \mathbf{dx}^0 \) is the initial guess.
+
+\subsection{Nonlinear Operator}
+Define a nonlinear operator \( \mathcal{N}(\mathbf{x}) \) that relates the state vector to the observations.
+
+\subsection{Cost Function}
+The cost function \( J(\mathbf{dx}^k) \) is formulated as:
+
+\[
+J(\mathbf{dx}^k) = \frac{1}{2} \|\mathbf{dx}^k\|^2_{B_{inv}} + \frac{1}{2} \|\mathbf{y}_{obs} - \mathcal{N}(\mathbf{x}_b + \mathbf{dx}^k)\|^2_{R_{inv}}
+\]
+
+\subsection{Adjoint Model}
+The adjoint of the TLM is denoted as \( \mathcal{A} \) and is used to propagate the gradients back through the nonlinear operator.
+
+\subsection{Gradient of the Cost Function}
+The gradient \( \nabla J(\mathbf{dx}^k) \) is computed using the TLM and its adjoint:
+
+\[
+\nabla J(\mathbf{dx}^k) = B_{inv} \mathbf{dx}^k - \mathcal{J}(\mathbf{x}_b + \mathbf{dx}^k)^T R_{inv} (\mathbf{y}_{obs} - \mathcal{N}(\mathbf{x}_b + \mathbf{dx}^k))
+\]
+
+\subsection{Iterative Update}
+At each iteration, the analysis increment is updated based on the current gradient:
+
+\[
+\mathbf{dx}^{k+1} = \mathbf{dx}^k - \alpha_k \nabla J(\mathbf{dx}^k)
+\]
+
+where \( \alpha_k \) is the step size.
+
+\subsection{Updating the Models}
+The TLM and its adjoint are updated at each iteration based on the latest analysis:
+
+\[
+\mathcal{N}(\mathbf{x}_b + \mathbf{dx}^{k+1}) \quad \text{and} \quad \mathcal{A}(\mathbf{x}_b + \mathbf{dx}^{k+1})
+\]
+
+\section{Relationship to Bayes' Theorem}
+
+\subsection{Bayes' Theorem}
+The formulation relates to Bayes' theorem, where we interpret \( J(\mathbf{dx}^k) \) in terms of the posterior and likelihood:
+
+\[
+P(\mathbf{x} | \mathbf{y}) \propto P(\mathbf{y} | \mathbf{x}) P(\mathbf{x})
+\]
+
+\subsection{Negative Log-Posterior}
+The cost function represents the negative log-posterior:
+
+\[
+J(\mathbf{dx}^k) = -\log P(\mathbf{x} | \mathbf{y}) + C
+\]
+
+\section{Summary of the Iterative Process}
+
+The overall process can be summarized as follows:
+
+\begin{align*}
+\text{Initialize:} & \quad \mathbf{dx}^0 \text{ (initial guess)} \\
+\text{For } k = 0, 1, 2, \ldots: & \\
+& \quad \text{Compute } J(\mathbf{dx}^k) \\
+& \quad \text{Compute } \nabla J(\mathbf{dx}^k) \text{ using TLM and its adjoint} \\
+& \quad \mathbf{dx}^{k+1} = \mathbf{dx}^k - \alpha_k \nabla J(\mathbf{dx}^k) \\
+& \quad \text{Update TLM and adjoint: } \mathcal{N}(\mathbf{x}_b + \mathbf{dx}^{k+1}) \text{ and } \mathcal{A}(\mathbf{x}_b + \mathbf{dx}^{k+1})
+\end{align*}
+
+\end{document}

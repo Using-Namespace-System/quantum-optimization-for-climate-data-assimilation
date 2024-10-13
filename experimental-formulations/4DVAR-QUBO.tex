@@ -1,0 +1,117 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\lstset{
+    backgroundcolor=\color{lightgray},
+    basicstyle=\ttfamily,
+    breaklines=true
+}
+
+\title{quantum optimization for climate data assimilation}
+\author{Brian Recktenwall-Calvet}
+\date{October 2024}
+\begin{document}
+\maketitle
+\section{Quadratic Unconstrained Optimization Problem Formulation}
+
+\subsection{Define the Problem Components}
+
+We start with the following components in our 4D-Var framework:
+
+\begin{itemize}
+    \item Background State: \( \mathbf{x}_b \)
+    \item Initial Guess for Analysis Increment: \( \mathbf{dx}^0 \)
+    \item Observations: \( \mathbf{y}_{obs} \)
+    \item Error Covariances: \( B_{inv} \) (background error) and \( R_{inv} \) (observation error)
+    \item Nonlinear Operator: \( \mathcal{N}(\mathbf{x}) \)
+\end{itemize}
+
+\subsection{Linearization of the Nonlinear Operator}
+
+Using the tangent linear approximation around the trajectory from the first guess, we have:
+
+\[
+\mathbf{y} = \mathcal{N}(\mathbf{x}_b + \mathbf{dx}) \approx \mathcal{N}(\mathbf{x}_b + \mathbf{dx}^0) + \mathcal{N}'(\mathbf{x}^0) \cdot \mathbf{dx}
+\]
+
+Denote:
+
+\[
+\mathbf{y}^0 = \mathcal{N}(\mathbf{x}_b + \mathbf{dx}^0)
+\]
+
+Thus, we can write:
+
+\[
+\mathbf{y} \approx \mathbf{y}^0 + \mathcal{N}'(\mathbf{x}^0) \cdot \mathbf{dx}
+\]
+
+\subsection{Formulate the Cost Function}
+
+The cost function \( J(\mathbf{dx}) \) is defined as:
+
+\[
+J(\mathbf{dx}) = \frac{1}{2} \|\mathbf{dx}\|^2_{B_{inv}} + \frac{1}{2} \|\mathbf{y}_{obs} - \mathbf{y}^0 - \mathcal{N}'(\mathbf{x}^0) \cdot \mathbf{dx}\|^2_{R_{inv}}
+\]
+
+Expanding the observation term gives:
+
+\[
+\|\mathbf{y}_{obs} - \mathbf{y}^0 - \mathcal{N}'(\mathbf{x}^0) \cdot \mathbf{dx}\|^2_{R_{inv}} = (\mathbf{y}_{obs} - \mathbf{y}^0 - \mathcal{N}'(\mathbf{x}^0) \cdot \mathbf{dx})^T R_{inv} (\mathbf{y}_{obs} - \mathbf{y}^0 - \mathcal{N}'(\mathbf{x}^0) \cdot \mathbf{dx})
+\]
+
+\subsection{Constructing the QUBO Formulation}
+
+Combining the components, we rewrite the cost function \( J(\mathbf{dx}) \):
+
+\[
+J(\mathbf{dx}) = \frac{1}{2} \mathbf{dx}^T B_{inv} \mathbf{dx} + \frac{1}{2} (\mathbf{y}_{obs} - \mathbf{y}^0 - \mathcal{N}'(\mathbf{x}^0) \cdot \mathbf{dx})^T R_{inv} (\mathbf{y}_{obs} - \mathbf{y}^0 - \mathcal{N}'(\mathbf{x}^0) \cdot \mathbf{dx})
+\]
+
+This expands to:
+
+
+\begin{align*}
+J(\mathbf{dx}) &= \frac{1}{2} \mathbf{dx}^T B_{inv} \mathbf{dx} \\
+&\quad + \frac{1}{2} (\mathbf{y}_{obs} - \mathbf{y}^0)^T R_{inv} (\mathbf{y}_{obs} - \mathbf{y}^0) \\
+&\quad - \mathbf{dx}^T \mathcal{N}'(\mathbf{x}^0)^T R_{inv} (\mathbf{y}_{obs} - \mathbf{y}^0) \\
+&\quad + \frac{1}{2} \mathbf{dx}^T \mathcal{N}'(\mathbf{x}^0)^T R_{inv} \mathcal{N}'(\mathbf{x}^0) \mathbf{dx}
+\end{align*}
+
+Thus, we can express:
+
+\[
+J(\mathbf{dx}) = \frac{1}{2} \mathbf{dx}^T \left( B_{inv} + \mathcal{N}'(\mathbf{x}^0)^T R_{inv} \mathcal{N}'(\mathbf{x}^0) \right) \mathbf{dx} - \mathbf{dx}^T \mathcal{N}'(\mathbf{x}^0)^T R_{inv} (\mathbf{y}_{obs} - \mathbf{y}^0) + C
+\]
+
+where \( C \) is a constant term independent of \( \mathbf{dx} \).
+
+\subsection{Define the QUBO Problem}
+
+To convert this into QUBO format, we need to express it as:
+
+\[
+\text{Minimize } J(\mathbf{b}) = \frac{1}{2} \mathbf{b}^T Q \mathbf{b} + \mathbf{c}^T \mathbf{b} + C
+\]
+
+\subsubsection{Binary Mapping}
+
+Define a binary representation of the analysis increment \( \mathbf{dx} \):
+
+\begin{itemize}
+    \item Convert each \( dx_i \) to binary variables \( b_i \).
+\end{itemize}
+
+After substituting \( \mathbf{dx} = f(\mathbf{b}) \) into the cost function and expressing it as a quadratic form with respect to the binary variables, the final QUBO representation becomes:
+
+\[
+\text{Minimize } J(\mathbf{b}) = \frac{1}{2} \mathbf{b}^T Q \mathbf{b} + \mathbf{c}^T \mathbf{b} + C
+\]
+
+where \( Q \) and \( \mathbf{c} \) are derived from the previous expansions.
+
+\end{document}

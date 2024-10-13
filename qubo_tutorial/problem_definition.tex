@@ -1,0 +1,156 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{graphicx}
+
+\begin{document}
+
+\title{Unbalanced Penalization for the Knapsack Problem}
+\author{}
+\date{}
+\maketitle
+
+\section{Problem Definition}
+
+The \textbf{Knapsack Problem} involves selecting a subset of items, each with a value \( v_i \) and weight \( w_i \), such that the total weight does not exceed a given limit \( W \). The goal is to maximize the total value:
+
+\[
+\text{Maximize} \quad \sum_{i=1}^{n} v_i x_i
+\]
+
+subject to:
+
+\[
+\sum_{i=1}^{n} w_i x_i \leq W
+\]
+
+where \( x_i \in \{0, 1\} \) indicates whether item \( i \) is included in the knapsack.
+
+\section{Unbalanced Penalization Approach}
+
+To incorporate penalties for violating the weight constraint, we modify the objective function as follows:
+
+\subsection{Modified Objective Function}
+
+The modified objective function is given by:
+
+\[
+\min_{x,s} \left( f(x) + p(x,s) \right)
+\]
+
+where:
+
+\[
+f(x) = -\sum_{i=1}^{n} v_i x_i
+\]
+
+The penalty function \( p(x,s) \) includes both a linear penalty for exceeding the weight constraint and a quadratic penalty:
+
+\[
+p(x,s) = -\lambda_1 \left( \sum_{i=1}^{n} w_i x_i - W \right) + \lambda_2 \left( \sum_{i=1}^{n} w_i x_i - W \right)^2
+\]
+
+Thus, the complete objective becomes:
+
+\[
+\min_{x} \left( -\sum_{i=1}^{n} v_i x_i - \lambda_1 \left( \sum_{i=1}^{n} w_i x_i - W \right) + \lambda_2 \left( \sum_{i=1}^{n} w_i x_i - W \right)^2 \right)
+\]
+
+\section{Parameter Definitions}
+
+\begin{itemize}
+    \item \( \lambda_1 \): Coefficient for the linear penalty when the weight exceeds \( W \).
+    \item \( \lambda_2 \): Coefficient for the quadratic penalty, which imposes a larger penalty as the weight violation increases.
+\end{itemize}
+
+\section{Implementation Steps}
+
+\subsection{Model Creation}
+
+Using a mathematical programming library like Docplex, we define the Knapsack model:
+
+1. \textbf{Binary Variable Definition:}
+
+   Let \( x \) be a binary variable list representing item selection:
+
+   \[
+   x = \text{binary\_var\_list}(\text{range}(n), \text{name}="x")
+   \]
+
+2. \textbf{Objective Function Setup:}
+
+   The objective is to minimize the negative total value:
+
+   \[
+   \text{cost} = -\sum_{i=1}^{n} x_i v_i
+   \]
+
+3. \textbf{Weight Constraint:}
+
+   Add the constraint to ensure the total weight does not exceed \( W \):
+
+   \[
+   \sum_{i=1}^{n} w_i x_i \leq W
+   \]
+
+\section{Conversion to Ising Model}
+
+To solve the problem using quantum algorithms, we need to convert the problem into an Ising model:
+
+1. \textbf{Using Docplex to Ising Conversion:}
+
+   The model is transformed into an Ising Hamiltonian, which typically has the form:
+
+   \[
+   H(z) = \sum_{i} h_i z_i + \sum_{i < j} J_{ij} z_i z_j + O
+   \]
+
+   Here, \( h_i \) are linear terms, \( J_{ij} \) are interaction terms, and \( O \) is a constant offset.
+
+2. \textbf{Extracting Terms:}
+
+   From the Ising model, we extract the linear and quadratic terms:
+
+   - Single-qubit terms \( h_{\text{new}} \):
+     \[
+     h_{\text{new}} = \{(i,): \text{weight from Ising model}\}
+     \]
+
+   - Two-qubit interaction terms \( J_{\text{new}} \):
+     \[
+     J_{\text{new}} = \{(i,j): \text{interaction strength from Ising model}\}
+     \]
+
+\section{QAOA Circuit Implementation}
+
+With the new Hamiltonian, the QAOA circuit is implemented:
+
+1. \textbf{Circuit Definition:}
+
+   The QAOA circuit alternates between applying the cost Hamiltonian and the mixer Hamiltonian. The circuit can be expressed mathematically as follows:
+
+   \[
+   U(H, \gamma) = e^{-i \gamma H_c}, \quad U(B, \beta) = e^{-i \beta X}
+   \]
+
+   where \( H_c \) is the cost Hamiltonian, and \( X \) is the mixer Hamiltonian.
+
+2. \textbf{Sample Generation:}
+
+   Execute the QAOA circuit to obtain samples:
+
+   \[
+   \text{samples\_unbalanced} = \text{samples\_dict}(qaoa\_circuit(gammas, betas, h_{\text{new}}, J_{\text{new}}, n))
+   \]
+
+3. \textbf{Valid Solution Filtering:}
+
+   Retain samples that satisfy the weight constraint:
+
+   \[
+   \{ \text{valid samples} \, | \, \sum_{i=1}^{n} w_i x_i \leq W \}
+   \]
+
+
+
+\end{document}

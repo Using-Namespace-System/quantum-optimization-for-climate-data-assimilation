@@ -1,0 +1,268 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\lstset{
+    backgroundcolor=\color{lightgray},
+    basicstyle=\ttfamily,
+    breaklines=true
+}
+
+\title{quantum optimization for climate data assimilation}
+\author{Brian Recktenwall-Calvet}
+\date{October 2024}
+\begin{document}
+\maketitle
+\section{4DVAR Cost Function}
+
+The 4DVAR cost function is defined as:
+
+\begin{equation}
+J(\delta x_0) = \delta x_0^T Q_0^{-1} \delta x_0 + d_{1:L}^T R_{1:L}^{-1} d_{1:L}
+\end{equation}
+
+where:
+\begin{itemize}
+    \item \( \delta x_0 = x_0 - x^f_0 \) is the analysis increment,
+    \item \( Q_0 \) is the background error covariance matrix,
+    \item \( d_{1:L} \) is the observation departure,
+    \item \( R_{1:L} \) is the observation error covariance matrix.
+\end{itemize}
+
+\section{Observation Departure}
+
+The observation departure \( d_k \) for each time step \( k \) is given by:
+
+\begin{equation}
+d_k = y^o_k - H M_{k|0}(x^f_0 + \delta x_0)
+\end{equation}
+
+where:
+\begin{itemize}
+    \item \( y^o_k \) is the observed value at time \( k \),
+    \item \( H \) is the linear observation operator,
+    \item \( M_{k|0} \) is the nonlinear model forecast from time \( t=0 \) to time \( k \).
+\end{itemize}
+
+\section{Full Observation Departure Vector}
+
+The full observation departure vector is defined as:
+
+\begin{equation}
+d_{1:L}^T = \begin{bmatrix}
+d_1^T \\
+\vdots \\
+d_L^T
+\end{bmatrix}
+\end{equation}
+
+Substituting the individual departures into the cost function gives:
+
+\begin{equation}
+J(\delta x_0) = \delta x_0^T Q_0^{-1} \delta x_0 + \left( \begin{bmatrix}
+y^o_1 - H M_{1|0}(x^f_0 + \delta x_0) \\
+\vdots \\
+y^o_L - H M_{L|0}(x^f_0 + \delta x_0)
+\end{bmatrix} \right)^T R_{1:L}^{-1} \left( \begin{bmatrix}
+y^o_1 - H M_{1|0}(x^f_0 + \delta x_0) \\
+\vdots \\
+y^o_L - H M_{L|0}(x^f_0 + \delta x_0)
+\end{bmatrix} \right)
+\end{equation}
+
+\section{Deriving the Gradient}
+
+To minimize \( J(\delta x_0) \), we need the gradient:
+
+\begin{equation}
+\frac{\partial J(\delta x_0)}{\partial \delta x_0} = 2 Q_0^{-1} \delta x_0 - 2 M^T_{1:L} H^T R_{1:L}^{-1} d_{1:L}
+\end{equation}
+
+\subsection*{Proof of Gradient Calculation}
+
+1. **First Term**: The first term \( \delta x_0^T Q_0^{-1} \delta x_0 \) is a quadratic form.
+   - Its gradient with respect to \( \delta x_0 \) is \( 2 Q_0^{-1} \delta x_0 \).
+
+2. **Second Term**: For the second term \( d_{1:L}^T R_{1:L}^{-1} d_{1:L} \):
+   - The gradient can be computed by the chain rule, recognizing that \( d_{1:L} \) depends on \( \delta x_0 \).
+   - The result is \( -2 M^T_{1:L} H^T R_{1:L}^{-1} d_{1:L} \).
+
+Combining these gives:
+
+\begin{equation}
+\frac{\partial J(\delta x_0)}{\partial \delta x_0} = 2 Q_0^{-1} \delta x_0 - 2 M^T_{1:L} H^T R_{1:L}^{-1} d_{1:L}
+\end{equation}
+
+\section{Relating to QAOA}
+
+Now, we can relate the optimization of the 4DVAR cost function to the Quantum Approximate Optimization Algorithm (QAOA).
+
+1. **Encoding into a Hamiltonian**:
+   - The cost function \( J(\delta x_0) \) can be expressed in a quadratic form suitable for QAOA.
+   - Define the cost Hamiltonian \( H_C \) based on the 4DVAR problem.
+
+2. **Parameterization**:
+   - QAOA uses a parameterized quantum circuit to explore the solution space, adjusting parameters to minimize \( H_C \).
+
+3. **Optimization**:
+   - Classical optimization techniques (like gradient descent) can be used to find the optimal parameters that minimize the cost function.
+   - This is analogous to optimizing \( \delta x_0 \) in 4DVAR.
+
+\section{Introduction to QAOA}
+
+The Quantum Approximate Optimization Algorithm (QAOA) is designed to solve combinatorial optimization problems on quantum computers. It utilizes a variational approach, where a parameterized quantum circuit is iteratively optimized to minimize a cost function.
+
+\section{QAOA Framework}
+
+The QAOA consists of the following main components:
+
+1. **Cost Function**: We need to express our optimization problem in terms of a cost Hamiltonian \( H_C \). This Hamiltonian should reflect the structure of the optimization problem.
+
+2. **Parameterization**: QAOA introduces two sets of parameters:
+   \[
+   \gamma = (\gamma_1, \gamma_2, \ldots, \gamma_p)
+   \]
+   \[
+   \beta = (\beta_1, \beta_2, \ldots, \beta_p)
+   \]
+   These parameters control the evolution of the quantum state through \( p \) layers of the circuit.
+
+3. **Quantum Circuit**: The QAOA circuit is built as follows:
+   \[
+   |\psi(\gamma, \beta)\rangle = e^{-i \beta_p H_B} e^{-i \gamma_p H_C} \cdots e^{-i \beta_1 H_B} e^{-i \gamma_1 H_C} |s\rangle
+   \]
+   where \( |s\rangle \) is some initial state, usually chosen as \( |0\rangle^{\otimes n} \).
+
+\section{Defining the Cost Hamiltonian}
+
+To apply QAOA to our 4DVAR cost function \( J(\delta x_0) \), we need to define a cost Hamiltonian \( H_C \) based on the quadratic form of \( J(\delta x_0) \).
+
+Given:
+\[
+J(\delta x_0) = \delta x_0^T Q_0^{-1} \delta x_0 + d_{1:L}^T R_{1:L}^{-1} d_{1:L}
+\]
+
+We can express this in terms of binary variables, which can be encoded into qubits.
+
+1. **Mapping to Binary Variables**: We use a mapping matrix \( G \) to relate the continuous variable \( \delta x_0 \) to binary variables \( b \):
+   \[
+   \delta x_0 \approx \frac{1}{\alpha} G b
+   \]
+
+2. **Cost Hamiltonian**:
+   The cost Hamiltonian is then defined as:
+   \[
+   H_C = \frac{1}{\alpha^2} G^T \left( Q_0^{-1} + \tilde{M}^T_{1:L|0} H^T_{1:L} R_{1:L}^{-1} H_{1:L} \tilde{M}_{1:L|0} \right) G
+   \]
+
+This formulation allows us to express the minimization of the cost function \( J(\delta x_0) \) in terms of the Hamiltonian \( H_C \).
+
+\section{QAOA Implementation}
+
+1. **Prepare Initial State**: We start with an initial quantum state, often taken as \( |0\rangle^{\otimes N} \) where \( N \) is the number of qubits.
+
+2. **Layered Quantum Circuit**:
+   The quantum circuit for QAOA consists of \( p \) layers of gates. Each layer consists of:
+   - A \( R_z \) rotation for the cost Hamiltonian.
+   - A \( R_y \) rotation for the mixer Hamiltonian \( H_B \), typically chosen as:
+   \[
+   H_B = \sum_{i} X_i
+   \]
+
+3. **Quantum State Evolution**:
+   The state evolves through the parameterized circuit as:
+   \[
+   |\psi(\gamma, \beta)\rangle = e^{-i \beta_p H_B} e^{-i \gamma_p H_C} \cdots e^{-i \beta_1 H_B} e^{-i \gamma_1 H_C} |0\rangle^{\otimes N}
+   \]
+
+\section{Measurement and Classical Optimization}
+
+1. **Measurement**: After applying the quantum circuit, we measure the state to obtain samples. Each measurement corresponds to a possible solution of the original optimization problem.
+
+2. **Objective Function Evaluation**: For each sampled state \( b \), we evaluate the cost function \( J(b) \).
+
+3. **Classical Optimization**:
+   - We use a classical optimization method to adjust the parameters \( \gamma \) and \( \beta \) to minimize the expected value of the cost Hamiltonian:
+   \[
+   E[H_C] = \langle \psi(\gamma, \beta) | H_C | \psi(\gamma, \beta) \rangle
+   \]
+
+4. **Iterative Updates**: The parameters are iteratively updated based on the results of the measurements until convergence is reached.
+
+\section{Convergence and Output}
+
+The goal is to find the optimal parameters \( \gamma^* \) and \( \beta^* \) that minimize the expected value of the cost Hamiltonian, leading to the optimal solution for \( \delta x_0 \) that approximates the minimum of the original 4DVAR cost function.
+
+\section{Step 1: Define the 4DVAR Cost Function as a QUBO}
+
+The original 4DVAR cost function is defined as:
+
+\begin{equation}
+J(\delta x_0) = \delta x_0^T Q_0^{-1} \delta x_0 + d_{1:L}^T R_{1:L}^{-1} d_{1:L},
+\end{equation}
+
+where \( \delta x_0 \) represents the analysis increment. We can reformulate this cost function in terms of binary variables \( b \) to approximate \( \delta x_0 \), leading to a quadratic form:
+
+\begin{equation}
+J(b) = b^T Q b,
+\end{equation}
+
+where \( Q \) incorporates the contributions from the covariance matrices \( Q_0 \) and \( R_{1:L} \).
+
+\section{Step 2: Establish the Cost Hamiltonian for QAOA}
+
+In QAOA, the optimization problem is expressed using a Hamiltonian \( H_C \):
+
+\begin{equation}
+H_C = \sum_{i,j} Q_{ij} b_i b_j,
+\end{equation}
+
+which represents the cost function we seek to minimize.
+
+\section{Step 3: Describe the QAOA Circuit Structure}
+
+The QAOA constructs a parameterized quantum circuit to encode the optimization problem:
+
+\subsection{Initial State}
+The process begins with a uniform superposition of all binary states, represented as:
+
+\begin{equation}
+|0\rangle^{\otimes N}.
+\end{equation}
+
+\subsection{Parameterized Circuit}
+The quantum state evolves through \( p \) layers of gates, alternating between the cost Hamiltonian \( H_C \) and a mixing Hamiltonian \( H_B \):
+
+\begin{equation}
+|\psi(\gamma, \beta)\rangle = e^{-i \beta_p H_B} e^{-i \gamma_p H_C} \cdots e^{-i \beta_1 H_B} e^{-i \gamma_1 H_C} |0\rangle^{\otimes N}.
+\end{equation}
+
+Here, \( H_B \) typically facilitates transitions between binary states, allowing effective exploration of the solution space.
+
+\section{Step 4: Demonstrate the Optimization Process}
+
+\subsection{Measurement}
+After applying the quantum circuit, we measure the resulting state to obtain binary outcomes \( b \).
+
+\subsection{Objective Function Evaluation}
+For each sampled state \( b \), the cost function is evaluated as:
+
+\begin{equation}
+J(b) = b^T Q b.
+\end{equation}
+
+\subsection{Classical Optimization}
+The parameters \( \gamma \) and \( \beta \) are then adjusted using a classical optimization method to minimize the expected value of the Hamiltonian:
+
+\begin{equation}
+E[H_C] = \langle \psi(\gamma, \beta) | H_C | \psi(\gamma, \beta) \rangle.
+\end{equation}
+
+This process directly minimizes the QUBO formulation derived from the 4DVAR context.
+
+
+\end{document}
+

@@ -1,0 +1,200 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\lstset{
+    backgroundcolor=\color{lightgray},
+    basicstyle=\ttfamily,
+    breaklines=true
+}
+
+\section{Introduction to 4DVAR}
+
+This study focuses on the four-dimensional variational data assimilation (4DVAR), which is among the most widely used data assimilation methods in operational NWP centers such as ECMWF, Met Office, NOAA, and JMA. 4DVAR assimilates observations over a time window to produce an analysis trajectory that minimizes its cost function (Fig. 1). 
+
+\subsection{Cost Function}
+
+The cost function of 4DVAR is derived from Bayes’ theorem and is given by:
+
+\[
+J (\delta x_0) = \delta x_0^T Q_0^{-1} \delta x_0 + d_{1:L}^T R_{1:L}^{-1} d_{1:L}, 
+\]
+
+where \( \delta x_0 = x_0 - x^f_0 \in \mathbb{R}^N \) is the analysis increment, \( Q \in \mathbb{R}^{N \times N} \) is the background error covariance, \( d_{1:L} \in \mathbb{R}^{PL} \) is the observation departure, and \( R_{1:L} \in \mathbb{R}^{PL \times PL} \) is the observation error covariance. The superscript \( f \) represents the forecast, the subscript \( 0 \) denotes time \( t = 0 \) of the time window, and \( 1:L \) indicates observation time slots from \( t = 1 \) to \( t = L \). Here, \( N \) is the system size, \( L \) is the number of observation time slots, and \( P \) is the number of observations per time slot.
+
+The observation departure is given by:
+
+\[
+d_{1:L}^T = \begin{bmatrix}
+d_1^T \\
+\vdots \\
+d_L^T
+\end{bmatrix}, 
+\]
+
+where
+
+\[
+d_k = y^o_k - H M_{k|0} \left( x^f_0 + \delta x_0 \right),
+\]
+
+with \( y^o_k \in \mathbb{R}^P \) being the observation at time \( k \), \( M_{k|0} \) being the nonlinear model forecast from time \( t = 0 \) to \( k \), and \( H \in \mathbb{R}^{P \times N} \) being the linear observation operator.
+
+\subsection{Gradient and Iterative Update}
+
+Conventional 4DVAR iteratively updates the analysis increment \( \delta x_0 \) by reducing the cost function using the quasi-Newton method based on the gradient:
+
+\[
+\frac{\partial J (\delta x_0)}{\partial \delta x_0} = 2 Q_0^{-1} \delta x_0 - 2 M^T_{1:L} H^T R_{1:L}^{-1} d_{1:L},
+\]
+
+where
+
+\[
+H^T_{1:L} = \begin{bmatrix}
+H^T & O & \cdots & O \\
+O & H^T & \cdots & O \\
+\vdots & \vdots & \ddots & \vdots \\
+O & O & \cdots & H^T
+\end{bmatrix},
+\]
+
+and \( O \) is the zero matrix. The adjoint model \( M^T_{1:L} \in \mathbb{R}^{N \times NL} \) is given by:
+
+\[
+M^T_{1:L|0} = \begin{bmatrix}
+M^T_{1|0} \\
+\vdots \\
+M^T_{L|0}
+\end{bmatrix},
+\]
+
+where 
+
+\[
+M^T_{k|0} = \prod_{l=1}^{Y_k} M^T_{l|l-1}.
+\]
+
+The tangent linear model \( M_{l|l-1} \in \mathbb{R}^{N \times N} \) approximates:
+
+\[
+M_{l|l-1} \left( M_{l-1|0} \left( x^f_0 + \delta x_0 \right) + \epsilon \right) \approx M_{l|0} \left( x^f_0 + \delta x_0 \right) + M_{l|l-1} \epsilon,
+\]
+
+where \( \epsilon \in \mathbb{R}^N \) is a vector with very small real numbers, and \( \epsilon = 10^{-5} \times [1,\ldots,1]^T \) is used in this study. This optimization minimizes the quadratic cost function (Eq. 1), including the nonlinear operator with respect to the analysis increment (Eq. 3), and is referred to as NL-QUO in this study.
+
+In NL-QUO, the tangent linear model \( M \) and its adjoint model \( M^T \) are updated at every iteration based on the latest analysis; \( x_0 = x^f_0 + \delta x_0 \).
+
+\subsection{Approximation of Cost Function}
+
+As an intermediate step toward QUBO, the original cost function is approximated as follows:
+
+\[
+J (\delta x_0) \approx \tilde{J}(\delta x_0) = \delta x_0^T Q_0^{-1} \delta x_0 + \tilde{d}_{1:L}^T R_{1:L}^{-1} \tilde{d}_{1:L},
+\]
+
+
+The observation departure can be represented as:
+
+\[
+\tilde{d}_{1:L}^T = \begin{bmatrix}
+\tilde{d}_1^T \\
+\vdots \\
+\tilde{d}_L^T
+\end{bmatrix} 
+\]
+
+where 
+
+\[
+d_k \approx \tilde{d}_k = y^o_k - H x^f_k - H \tilde{M}_{k|0} \delta x_0,
+\]
+
+and 
+
+\[
+\tilde{M}_{k|0} = \prod_{l=0}^{Y_{k-1}} \tilde{M}_{l|l-1}.
+\]
+
+
+Here, \( M_{k|0} \) is the updated tangent linear model. The tilde indicates linear approximations. Unlike NL-QUO, this optimization retains the same tangent linear model and its adjoint model during the iteration. Specifically, the tangent linear model is expanded not around the trajectory from the latest analysis \( (x^f_0 + \delta x_0) \) but around the trajectory from the first guess \( (x^f_0) \) as follows:
+
+\[
+M_{l|l-1} \left( M_{l-1|0} \left( x^f_0 \right) + \epsilon \right) \approx M_{l|0} \left( x^f_0 \right) + \tilde{M}_{l|l-1} \epsilon.
+\]
+
+The substitution of Eqs. (10)–(12) into Eq. (9) gives the following quadratic unconstrained optimization (L-QUO) that has only linear operations with respect to the analysis increment as follows:
+
+\[
+\tilde{J}(\delta x_0) = \delta x_0^T \left( Q_0^{-1} + \tilde{M}^T_{1:L|0} H^T_{1:L} R_{1:L}^{-1} H_{1:L} \tilde{M}_{1:L|0} \right) \delta x_0 - 2 s^T_{1:L} R_{1:L}^{-1} H_{1:L} \tilde{M}_{1:L|0} \delta x_0 + C,
+\]
+
+where the constant \( C \) is given by:
+
+\[
+C = s^T_{1:L} R_{1:L}^{-1} s_{1:L},
+\]
+
+with
+
+\[
+s^T_{1:L} = \begin{bmatrix}
+s^T_1 \\
+\vdots \\
+s^T_L
+\end{bmatrix},
+\]
+
+and 
+
+\[
+s_k = y^o_k - H x^f_k.
+\]
+
+The gradient of \( \tilde{J} \) is given by
+
+\[
+\frac{\partial \tilde{J}(\delta x_0)}{\partial \delta x_0} = 2 \left( Q_0^{-1} + \tilde{M}^T_{1:L|0} H^T_{1:L} R_{1:L}^{-1} H_{1:L} \tilde{M}_{1:L|0} \right) \delta x_0 - 2 \tilde{M}^T_{1:L|0} H^T_{1:L} R_{1:L}^{-1} s_{1:L}.
+\]
+
+\subsection{Quantum Data Assimilation}
+
+Quantum annealers require only the cost function, in contrast to conventional 4DVAR that requires both the cost function and its gradient. However, the cost function should be represented by binary variables (i.e., 0 or 1) for quantum annealers. In this study, we represent a real number with \( Z \) qubits, where \( Z \) is a natural number. In accordance with the method of Inoue et al. (2021), a mapping matrix \( G \in \mathbb{R}^{N \times NZ} \) is used in this study:
+
+\[
+\delta x_0 \approx \frac{1}{\alpha} G b = \frac{1}{\alpha} \begin{bmatrix}
+g^T_0 \\
+\vdots \\
+0 \\
+g^T
+\end{bmatrix} b,
+\]
+
+where 
+
+\[
+g^T = \left( -2^{Z-1}, 2^{Z-2}, 2^{Z-3}, \ldots, 2^1, 2^0 \right),
+\]
+
+and \( \alpha \) is the tunable scaling parameter, \( b \in \mathbb{R}^{NZ} \) is the binary vector whose elements are all either 0 or 1, and \( 0 \) is the vector whose elements are all 0. Thus, Eq. (14) is reformulated into QUBO as follows:
+
+\[
+\tilde{J}(\delta x_0) \approx H(b) = b^T A b + u^T b + C,
+\]
+
+where \( H \) is the Hamiltonian. \( A \in \mathbb{R}^{NZ \times NZ} \) and \( u \in \mathbb{R}^{NZ} \) are given as follows:
+
+\[
+A = \frac{1}{\alpha^2} G^T \left( Q_0^{-1} + \tilde{M}^T_{1:L|0} H^T_{1:L} R_{1:L}^{-1} H_{1:L} \tilde{M}_{1:L|0} \right) G,
+\]
+
+\[
+u^T = -\frac{2}{\alpha} s^T_{1:L} R_{1:L}^{-1} H_{1:L} \tilde{M}_{1:L|0} G.
+\]
+
+Note that the constant \( C \) is irrelevant to the minimization problem. Quantum annealers solve the QUBO problem (Eq. 21) by inputting \( A \) and \( u \) into the solvers.
+
+\end{document}

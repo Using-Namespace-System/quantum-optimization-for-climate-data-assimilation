@@ -1,0 +1,107 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\lstset{
+    backgroundcolor=\color{lightgray},
+    basicstyle=\ttfamily,
+    breaklines=true
+}
+
+\title{quantum optimization for climate data assimilation}
+\author{Brian Recktenwall-Calvet}
+\date{October 2024}
+\begin{document}
+\maketitle
+
+\section{Introduction}
+
+In numerical weather prediction and data assimilation, the Tangent Linear Model (TLM) plays a critical role in the 4DVAR framework, which is inherently linked to Bayes' theorem. This document outlines these relationships mathematically.
+
+\section{4DVAR Cost Function}
+
+The cost function in the 4DVAR framework is defined as:
+
+\[
+J(\mathbf{x}) = \frac{1}{2} \|\mathbf{x} - \mathbf{x}_b\|_{B_{inv}}^2 + \frac{1}{2} \sum_{t=1}^{T} \|\mathbf{y}_{obs}(t) - H(\mathbf{x}(t))\|_{R_{inv}}^2
+\]
+
+where:
+\begin{itemize}
+    \item \( \mathbf{x} \): Analysis state vector.
+    \item \( \mathbf{x}_b \): Background state vector.
+    \item \( \mathbf{y}_{obs}(t) \): Observed data at time \( t \).
+    \item \( H(\mathbf{x}) \): Observation operator.
+    \item \( B_{inv} \): Inverse background error covariance matrix.
+    \item \( R_{inv} \): Inverse observation error covariance matrix.
+\end{itemize}
+
+\section{Tangent Linear Model}
+
+The TLM approximates the nonlinear model around a reference state \( \mathbf{x}_0 \):
+
+\[
+\frac{d \delta \mathbf{x}}{dt} = \mathbf{J}(\mathbf{x}_0) \cdot \delta \mathbf{x}
+\]
+
+where:
+\begin{itemize}
+    \item \( \delta \mathbf{x} = \mathbf{x}(t) - \mathbf{x}_0 \).
+    \item \( \mathbf{J}(\mathbf{x}_0) \): Jacobian matrix of the nonlinear model evaluated at \( \mathbf{x}_0 \).
+\end{itemize}
+
+The evolution of perturbations can be expressed as:
+
+\[
+\delta \mathbf{x}(t) = \mathbf{T}(t, t_0) \cdot \delta \mathbf{x}(t_0)
+\]
+
+where \( \mathbf{T}(t, t_0) \) is the tangent linear propagator.
+
+\section{Link to Bayes' Theorem}
+
+Using Bayes' theorem, the posterior probability can be expressed as:
+
+\[
+P(\mathbf{x} | \mathbf{y}) = \frac{P(\mathbf{y} | \mathbf{x}) P(\mathbf{x})}{P(\mathbf{y})}
+\]
+
+Taking the negative logarithm gives:
+
+\[
+-\log P(\mathbf{x} | \mathbf{y}) = -\log P(\mathbf{y} | \mathbf{x}) - \log P(\mathbf{x}) + \log P(\mathbf{y})
+\]
+
+The cost function \( J(\mathbf{x}) \) can be linked to the probabilities as follows:
+
+1. **Prior Probability Term**:
+   \[
+   J_b(\mathbf{x}) \propto -\log P(\mathbf{x})
+   \]
+
+2. **Likelihood Term**:
+   \[
+   J_o(\mathbf{x}) \propto -\log P(\mathbf{y} | \mathbf{x})
+   \]
+
+3. **Combined Cost Function**:
+   \[
+   J(\mathbf{x}) \propto -\log P(\mathbf{x}) - \log P(\mathbf{y} | \mathbf{x})
+   \]
+
+Thus, we can express the relationship as:
+
+\[
+J(\mathbf{x}) = -\log P(\mathbf{x} | \mathbf{y}) + C
+\]
+
+where \( C \) is a constant that does not depend on \( \mathbf{x} \).
+
+\section{Conclusion}
+
+The Tangent Linear Model facilitates the efficient computation of gradients and the propagation of perturbations in the 4DVAR framework. By linking the cost function to Bayes' theorem, we understand how minimizing \( J(\mathbf{x}) \) corresponds to maximizing the posterior probability \( P(\mathbf{x} | \mathbf{y}) \), thereby enhancing state estimates based on available observations.
+
+\end{document}

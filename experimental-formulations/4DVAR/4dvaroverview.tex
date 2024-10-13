@@ -1,0 +1,74 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\lstset{
+    backgroundcolor=\color{lightgray},
+    basicstyle=\ttfamily,
+    breaklines=true
+}
+
+\title{quantum optimization for climate data assimilation}
+\author{Brian Recktenwall-Calvet}
+\date{October 2024}
+\begin{document}
+\maketitle
+
+\section{Introduction}
+
+The Tangent Linear Model (TLM) plays a critical role in the 4DVAR framework, which is inherently linked to Bayes' theorem in the context of data assimilation. This document outlines these relationships mathematically.
+
+\section{Bayes' Theorem in Data Assimilation}
+
+Bayes' theorem provides a probabilistic framework for updating beliefs based on new evidence. In state estimation, it can be expressed as:
+
+\[
+P(\mathbf{x} | \mathbf{y}) = \frac{P(\mathbf{y} | \mathbf{x}) P(\mathbf{x})}{P(\mathbf{y})}
+\]
+
+where:
+\begin{itemize}
+    \item \( P(\mathbf{x} | \mathbf{y}) \): Posterior probability of the state given observations.
+    \item \( P(\mathbf{y} | \mathbf{x}) \): Likelihood of the observations given the state.
+    \item \( P(\mathbf{x}) \): Prior probability of the state.
+    \item \( P(\mathbf{y}) \): Evidence (normalizing constant).
+\end{itemize}
+
+\section{4DVAR Framework}
+
+In the 4DVAR framework, the cost function \( J(\mathbf{x}) \) is designed to minimize the difference between model predictions and observations, effectively implementing a form of Bayesian inference:
+
+\[
+J(\mathbf{x}) = -\log P(\mathbf{x} | \mathbf{y}) + C
+\]
+
+Minimizing \( J(\mathbf{x}) \) is equivalent to maximizing the posterior probability \( P(\mathbf{x} | \mathbf{y}) \).
+
+\section{Role of the Tangent Linear Model}
+
+The TLM provides a linearized representation of the nonlinear model around a reference state, crucial for calculating the gradients needed to minimize the cost function:
+
+\[
+\frac{d \delta \mathbf{x}}{dt} = \mathbf{J}(\mathbf{x}_0) \cdot \delta \mathbf{x}
+\]
+
+This allows for efficient computation of how perturbations in the state affect the model output, and subsequently, the likelihood term \( P(\mathbf{y} | \mathbf{x}) \).
+
+\section{Gradient of the Likelihood}
+
+In the context of 4DVAR, the likelihood term \( P(\mathbf{y} | \mathbf{x}) \) can be expressed using the TLM:
+
+\[
+\nabla J_o(\mathbf{x}) \propto -\mathbf{H}^T R_{inv} (\mathbf{y}_{obs} - H(\mathbf{x}))
+\]
+
+where \( \mathbf{H} \) represents the Jacobian of the observation operator, which can be computed using the TLM.
+
+\section{Conclusion}
+
+The TLM serves as a computational tool within the 4DVAR framework that facilitates efficient calculation of gradients, essential for optimizing the cost function that embodies Bayes' theorem. The TLM helps linearize the model, enabling evaluation of how changes in state affect the likelihood of observations, thus facilitating Bayesian updating of the state estimate.
+
+\end{document}

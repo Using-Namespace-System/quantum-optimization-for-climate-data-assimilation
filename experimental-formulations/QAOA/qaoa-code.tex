@@ -1,0 +1,122 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\lstset{
+    backgroundcolor=\color{lightgray},
+    basicstyle=\ttfamily,
+    breaklines=true
+}
+
+\title{quantum optimization for climate data assimilation}
+\author{Brian Recktenwall-Calvet}
+\date{October 2024}
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+
+4DVAR (Four-Dimensional Variational Data Assimilation), 
+
+
+\section{4DVAR Cost Function Python}
+\begin{lstlisting}[language=Python]
+import numpy as np
+from qiskit import QuantumCircuit, Aer, execute
+from qiskit.circuit import Parameter
+from scipy.optimize import minimize
+
+# Parameters
+alpha = 1.0
+N = 5  # Number of variables
+Z = 4  # Number of qubits
+
+# Example matrices (placeholders)
+Q_0_inv = np.random.rand(Z, Z)
+R_1L_inv = np.random.rand(N, N)
+y_o = np.random.rand(N)
+H = np.random.rand(N, Z)
+M_k0 = np.random.rand(N, Z)
+
+# Mapping matrix G
+g = np.array([-2**(Z-1), 2**(Z-2), 2**(Z-3), 2**(Z-4)])
+G = np.tile(g, (N, 1))
+
+# Observation departure function
+def observation_departure(b):
+    delta_x0 = (1 / alpha) * G @ b
+    d = y_o - H @ (M_k0 + delta_x0)
+    return d
+
+# Full cost function based on observation departure
+def full_cost_function(b):
+    delta_x0 = (1 / alpha) * G @ b
+    d = observation_departure(b)
+    
+    term1 = (1 / alpha**2) * delta_x0.T @ Q_0_inv @ delta_x0
+    term2 = (1 / alpha**2) * d.T @ R_1L_inv @ d
+    
+    return term1 + term2
+
+# QAOA Circuit for cost Hamiltonian
+def create_qaoa_circuit(gamma, beta):
+    circuit = QuantumCircuit(Z)
+    
+    # Initial state
+    circuit.h(range(Z))
+    
+    # Apply the cost Hamiltonian (quadratic terms)
+    for i in range(Z):
+        for j in range(Z):
+            if Q_0_inv[i, j] != 0:
+                circuit.rz(2 * gamma * Q_0_inv[i, j], i)
+                if i != j:
+                    circuit.cz(i, j)
+
+    # Mixer Hamiltonian
+    for i in range(Z):
+        circuit.rx(2 * beta, i)
+
+    return circuit
+
+# Function to evaluate the expected value of the cost Hamiltonian
+def qaoa_cost_function(params):
+    gamma = params[:Z]
+    beta = params[Z:]
+    
+    circuit = create_qaoa_circuit(gamma, beta)
+    simulator = Aer.get_backend('aer_simulator')
+    
+    # Measure all qubits
+    circuit.measure_all()
+
+    # Execute the circuit
+    job = execute(circuit, simulator, shots=1024)
+    result = job.result()
+    counts = result.get_counts(circuit)
+    
+    # Calculate expected value based on measured results
+    expectation = sum(counts.get(key, 0) * full_cost_function(np.array([int(bit) for bit in key])) for key in counts) / 1024
+    return expectation
+
+# Optimize the parameters using a classical optimizer
+def optimize_qaoa():
+    initial_params = np.random.rand(2 * Z)  # Initial guess for gamma and beta
+    result = minimize(qaoa_cost_function, initial_params, method='COBYLA')
+    return result
+
+# Run the optimization
+optimal_result = optimize_qaoa()
+print("Optimal parameters:", optimal_result.x)
+print("Minimum cost:", optimal_result.fun)
+
+
+\end{lstlisting}
+
+
+\end{document}
+

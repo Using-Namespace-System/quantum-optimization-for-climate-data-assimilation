@@ -1,0 +1,74 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\lstset{
+    backgroundcolor=\color{lightgray},
+    basicstyle=\ttfamily,
+    breaklines=true
+}
+
+\title{quantum optimization for climate data assimilation}
+\author{Brian Recktenwall-Calvet}
+\date{October 2024}
+\begin{document}
+
+\maketitle
+\section{Quantum data assimilation}
+
+\section{Introduction to 4DVAR}
+
+(Summarized from https://doi.org/10.5194/npg-31-237-2024) Kotsuki's study examines four-dimensional variational data assimilation (4DVAR), a prevalent method in operational numerical weather prediction (NWP) centers like ECMWF, Met Office, NOAA, and JMA. 4DVAR processes observations across a time window to derive an analysis trajectory that minimizes its cost function.
+
+\subsection{Cost Function}
+
+The cost function is rooted in Bayes' theorem:
+
+\[
+J (\delta x_0) = \delta x_0^T Q_0^{-1} \delta x_0 + d_{1:L}^T R_{1:L}^{-1} d_{1:L},
+\]
+
+where \( \delta x_0 \) is the analysis increment, \( Q \) is the background error covariance, and \( R \) is the observation error covariance. The observation departure is defined as:
+
+\[
+d_k = y^o_k - H M_{k|0} \left( x^f_0 + \delta x_0 \right).
+\]
+
+\subsection{Gradient and Iterative Update}
+
+4DVAR updates \( \delta x_0 \) iteratively using the quasi-Newton method, based on the gradient:
+
+\[
+\frac{\partial J (\delta x_0)}{\partial \delta x_0} = 2 Q_0^{-1} \delta x_0 - 2 M^T_{1:L} H^T R_{1:L}^{-1} d_{1:L}.
+\]
+
+The adjoint model \( M^T_{1:L} \) is computed as a product of tangent linear models.
+
+\subsection{Approximation of Cost Function}
+
+An intermediate step towards QUBO approximates the original cost function:
+
+\[
+J (\delta x_0) \approx \tilde{J}(\delta x_0) = \delta x_0^T Q_0^{-1} \delta x_0 + \tilde{d}_{1:L}^T R_{1:L}^{-1} \tilde{d}_{1:L}.
+\]
+
+The optimization retains the same tangent linear model during iterations, leading to a quadratic unconstrained optimization (L-QUO) form.
+
+\subsection{Quantum Data Assimilation}
+
+Quantum annealers require only the cost function, represented by binary variables. This study utilizes a mapping matrix \( G \) to approximate real numbers and reformulates the cost function into a QUBO format:
+
+\[
+\tilde{J}(\delta x_0) \approx H(b) = b^T A b + u^T b + C,
+\]
+
+where \( A \) and \( u \) are derived from the cost function, allowing quantum annealers to solve the problem by inputting these parameters.
+
+
+
+\end{document}
+
+

@@ -1,0 +1,99 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\lstset{
+    backgroundcolor=\color{lightgray},
+    basicstyle=\ttfamily,
+    breaklines=true
+}
+
+\title{quantum optimization for climate data assimilation}
+\author{Brian Recktenwall-Calvet}
+\date{October 2024}
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+
+4DVAR (Four-Dimensional Variational Data Assimilation), 
+
+
+\section{4DVAR Cost Function Python}
+\begin{lstlisting}[language=Python]
+from dwave.system import DWaveSampler, EmbeddingComposite
+from dwave.cloud import Client
+import dimod
+import pandas as pd
+from collections import defaultdict
+
+def knapsack_bqm(values, weights, maximum_weight, method='slack'):
+    n_items = len(values)
+    # Create the QUBO model
+    if method == 'slack':
+        # Create the slack variable BQM
+        bqm = dimod.BQM.from_qubo(QT, offset=lambd * maximum_weight**2)
+    elif method == 'unbalanced':
+        # Create the unbalanced penalization BQM
+        lagrange_multiplier = [0.96, 0.0371]
+        bqm = dimod.BQM.from_qubo(Q)
+        bqm.add_linear_inequality_constraint(
+            [(n, i) for n, i in enumerate(weights)],  # Constraint terms
+            lagrange_multiplier,
+            "unbalanced",
+            ub=maximum_weight,
+            penalization_method="unbalanced"
+        )
+    # Relabel variables for clarity
+    bqm.relabel_variables({i: f"x_{i}" for i in range(bqm.num_variables)})
+    return bqm
+
+# Sample execution of the D-Wave system
+account = False  # Set to True if you have D-Wave account details
+df = {}
+
+if account:
+    # Replace with your client information
+    sampler = DWaveSampler(region="eu-central-1")
+    sampler_qpu = EmbeddingComposite(sampler)
+    
+    for method in ['slack', 'unbalanced']:
+        bqm = knapsack_bqm(values_list, weights_list, maximum_weight, method)
+        samples = sampler_qpu.sample(bqm, num_reads=5000)  # Execute on real hardware
+        df[method] = samples.to_pandas_dataframe().sort_values('energy').reset_index(drop=True)
+        df[method].to_json(f"QUBO/dwave_results_{method}.json")  # Save the results
+else:
+    for method in ['slack', 'unbalanced']:
+        df[method] = pd.read_json(f"QUBO/dwave_results_{method}.json")  # Load previous results
+
+# Post-processing samples
+samples_dwave = {}
+values = {}
+
+for method in ['slack', 'unbalanced']:
+    samples_dwave[method] = defaultdict(int)
+    for i, row in df[method].iterrows():
+        sample_i = "".join(str(round(row[q])) for q in df[method].columns if q.startswith('x_'))
+        samples_dwave[method][sample_i] += row['num_occurrences']
+    
+    values[method] = {
+        sum_values(sample_i, values_list): count
+        for sample_i, count in samples_dwave[method].items()
+        if sum_weight(sample_i, weights_list) <= maximum_weight
+    }
+
+# Output the results
+for method in ['slack', 'unbalanced']:
+    optimal_value = max(values[method].keys(), default=0)
+    print(f"The number of optimal solutions using {method} method is {samples_dwave[method][optimal_value]} out of 5000")
+
+
+\end{lstlisting}
+
+
+\end{document}
+

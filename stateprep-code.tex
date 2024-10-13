@@ -1,0 +1,104 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\lstset{
+    backgroundcolor=\color{lightgray},
+    basicstyle=\ttfamily,
+    breaklines=true
+}
+
+\title{quantum optimization for climate data assimilation}
+\author{Brian Recktenwall-Calvet}
+\date{October 2024}
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+
+4DVAR (Four-Dimensional Variational Data Assimilation), 
+
+
+\section{4DVAR Cost Function Python}
+\begin{lstlisting}[language=Python]
+# Import necessary libraries
+import numpy as np
+import pandas as pd
+
+# Step 1: Load Background State and Observations
+# Replace 'background_state.csv' and 'observations.csv' with your actual file paths
+background_state = pd.read_csv('background_state.csv').values  # Shape: (N,)
+observations = pd.read_csv('observations.csv').values  # Shape: (L, P)
+
+# Load covariance matrices
+Q0 = np.load('Q0.npy')  # Shape: (N, N)
+R = np.load('R.npy')    # Shape: (PL, PL)
+
+# Step 2: Define Functions
+def compute_observation_departure(y_obs, x_forecast, H, delta_x):
+    """Calculate the observation departure."""
+    return y_obs - H @ (x_forecast + delta_x)
+
+def compute_cost_function(delta_x, Q0_inv, d, R_inv):
+    """Calculate the cost function."""
+    return delta_x.T @ Q0_inv @ delta_x + d.T @ R_inv @ d
+
+# Step 3: Compute Observation Departures
+L = observations.shape[0]
+P = observations.shape[1]
+N = background_state.shape[0]
+
+# Define H (observation operator)
+H = np.random.rand(P, N)  # Replace with your actual observation operator
+delta_x = np.zeros(N)  # Initial analysis increment
+
+d = []
+for k in range(L):
+    y_obs = observations[k]
+    departure = compute_observation_departure(y_obs, background_state, H, delta_x)
+    d.append(departure)
+
+d = np.concatenate(d)  # Shape: (PL,)
+
+# Step 4: Set Up Covariance Matrices
+Q0_inv = np.linalg.inv(Q0)
+R_inv = np.linalg.inv(R)
+
+# Step 5: Compute the Cost Function
+cost = compute_cost_function(delta_x, Q0_inv, d, R_inv)
+print(f'Initial Cost Function: {cost}')
+
+# Step 6: Prepare Data for Quantum Annealing
+def prepare_for_quantum(delta_x, alpha, NZ):
+    """Prepare data for quantum annealing."""
+    G = np.zeros((N, NZ))
+    for i in range(N):
+        G[i, :] = [-2**(NZ-1-j) for j in range(NZ)]  # Example mapping logic
+
+    b = np.random.randint(0, 2, size=(NZ,))  # Example binary vector
+    return G, b
+
+# Example parameters
+alpha = 1.0
+NZ = 10  # Number of qubits
+
+# Prepare G and b
+G, b = prepare_for_quantum(delta_x, alpha, NZ)
+
+# Step 7: Reformulate the Cost Function for Quantum Annealing
+A = (1 / alpha**2) * (G.T @ (Q0_inv + ...))  # Fill in remaining terms
+u = (-2 / alpha) * (d.T @ R_inv @ H @ G)
+
+# Output the matrices for quantum annealer
+print('Matrix A:', A)
+print('Vector u:', u)
+
+\end{lstlisting}
+
+
+\end{document}
+

@@ -1,0 +1,116 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{graphicx}
+\usepackage{hyperref}
+
+\begin{document}
+
+\title{Quantum Annealing Solution for the Knapsack Problem}
+\author{}
+\date{}
+\maketitle
+
+\section{Introduction}
+
+\textbf{Quantum Annealing} is a process that utilizes quantum mechanical effects to find low energy states of Ising Hamiltonians. This document describes the implementation of a quantum annealing solution for the Knapsack Problem using the D-Wave Advantage quantum computing system, which features over 5000 qubits.
+
+\section{Binary Quadratic Model (BQM)}
+
+To solve the Knapsack Problem using quantum annealing, we first formulate it as a Binary Quadratic Model (BQM).
+
+\subsection{QUBO Formulation}
+
+The QUBO (Quadratic Unconstrained Binary Optimization) model is constructed using two approaches: the slack variable method and the unbalanced penalization method.
+
+\subsubsection{Slack Variable Method}
+
+Using the slack variable approach, the QUBO model is defined as:
+
+\[
+\text{Minimize} \quad -\sum_{i=1}^{n} v_i x_i + \lambda \left( \sum_{i=1}^{n} w_i x_i - W \right)^2
+\]
+
+where \( x_i \in \{0, 1\} \) is a binary variable indicating the inclusion of item \( i \), \( v_i \) is the value of item \( i \), \( w_i \) is the weight of item \( i \), and \( W \) is the maximum weight capacity of the knapsack. The term \( \lambda \) is a penalty parameter that ensures the constraint is enforced.
+
+The constant offset is added as follows:
+
+\[
+\text{offset} = \lambda W^2
+\]
+
+\subsubsection{Unbalanced Penalization Method}
+
+In the unbalanced penalization method, the QUBO formulation is modified to include both linear and quadratic penalties for constraint violations. The objective function becomes:
+
+\[
+\text{Minimize} \quad -\sum_{i=1}^{n} v_i x_i - \lambda_1 \left( \sum_{i=1}^{n} w_i x_i - W \right) + \lambda_2 \left( \sum_{i=1}^{n} w_i x_i - W \right)^2
+\]
+
+where \( \lambda_1 \) and \( \lambda_2 \) are parameters controlling the linear and quadratic penalties, respectively.
+
+\section{Implementing the BQM}
+
+The BQM is implemented using the D-Wave system's API, where:
+
+1. **Slack Variable Model:**
+   \[
+   \text{BQM}_{\text{slack}} = \text{dimod.BQM.from\_qubo}(QT, \text{offset}=\lambda \cdot W^2)
+   \]
+
+2. **Unbalanced Model:**
+   The unbalanced model is created by adding a linear inequality constraint to the BQM:
+
+   \[
+   \text{BQM}_{\text{unbalanced}} = \text{dimod.BQM.from\_qubo}(Q)
+   \]
+   \[
+   \text{BQM}_{\text{unbalanced}}.\text{add\_linear\_inequality\_constraint}(
+   [(n, i) \text{ for } n, i \text{ in enumerate(weights\_list)}],
+   [\lambda_1, \lambda_2], "unbalanced", ub=W, \text{penalization\_method}="unbalanced"
+   )
+   \]
+
+3. **Variable Relabeling:**
+   The variables in the BQM are relabeled for clarity:
+
+   \[
+   \text{bqm}.\text{relabel\_variables}({i: f"x_{i}" \text{ for } i \text{ in range(bqm.num\_variables)}})
+   \]
+
+\section{Quantum Annealing Execution}
+
+To execute the BQM on a quantum annealer:
+
+1. **Sampling from the D-Wave System:**
+   The samples are obtained by executing the BQM on the D-Wave Advantage:
+
+   \[
+   \text{samples} = \text{sampler\_qpu.sample}(bqm[\text{method}], \text{num\_reads}=5000)
+   \]
+
+2. **Post-Processing the Samples:**
+   The sampling results are processed to count occurrences of each solution:
+
+   \[
+   \text{samples\_dwave}[\text{method}] = \text{defaultdict(int)}
+   \]
+   \[
+   \text{for each sample:} \quad \text{sample\_i} = \text{generate\_sample\_string(row)}
+   \]
+   \[
+   \text{samples\_dwave}[\text{method}][\text{sample\_i}] += \text{row["num\_occurrences"]}
+   \]
+
+3. **Filtering Valid Solutions:**
+   The solutions are filtered to retain those that satisfy the weight constraint:
+
+   \[
+   \text{values}[\text{method}] = \{ \sum \text{values(sample\_i)}: \text{count} \text{ for sample\_i, count in samples\_dwave[method]} \text{ if } \sum \text{weights(sample\_i)} \leq W \}
+   \]
+
+\section{Conclusion}
+
+The quantum annealing approach allows us to explore the solution space efficiently. By leveraging both the slack variable and unbalanced penalization methods, we can enhance the likelihood of finding optimal solutions to the Knapsack Problem on quantum hardware.
+
+\end{document}

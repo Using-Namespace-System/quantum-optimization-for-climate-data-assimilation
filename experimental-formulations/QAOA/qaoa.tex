@@ -1,0 +1,111 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\lstset{
+    backgroundcolor=\color{lightgray},
+    basicstyle=\ttfamily,
+    breaklines=true
+}
+
+\title{quantum optimization for climate data assimilation}
+\author{Brian Recktenwall-Calvet}
+\date{October 2024}
+\begin{document}
+\maketitle
+
+\section{4DVAR}
+The 4DVAR (Four-Dimensional Variational Data Assimilation) cost function can be expressed as:
+\begin{equation}
+J(\delta x_0) = \delta x_0^T Q_0^{-1} \delta x_0 + d_{1:L}^T R_{1:L}^{-1} d_{1:L},
+\end{equation}
+where \( \delta x_0 \) is the analysis increment, \( Q_0 \) is the background error covariance matrix, \( d_{1:L} \) is the observation departure, and \( R_{1:L} \) is the observation error covariance matrix.
+
+\section{Observation Departure}
+The observation departure for each time step \( k \) is defined as:
+\begin{equation}
+d_k = y^o_k - H M_{k|0}(x^f_0 + \delta x_0),
+\end{equation}
+where \( y^o_k \) is the observed value at time \( k \), \( H \) is the linear observation operator, and \( M_{k|0} \) is the nonlinear model forecast.
+
+The full observation departure vector is given by:
+\begin{equation}
+d_{1:L} = \begin{bmatrix}
+d_1 \\
+d_2 \\
+\vdots \\
+d_L
+\end{bmatrix}.
+\end{equation}
+
+Substituting individual departures into the cost function, we have:
+\begin{equation}
+J(\delta x_0) = \delta x_0^T Q_0^{-1} \delta x_0 + \sum_{k=1}^L d_k^T R^{-1} d_k.
+\end{equation}
+
+\section{Gradient Derivation}
+To minimize \( J(\delta x_0) \), we need to derive the gradient:
+\begin{equation}
+\frac{\partial J(\delta x_0)}{\partial \delta x_0} = 2 Q_0^{-1} \delta x_0 - 2 H^T R^{-1} d_{1:L}.
+\end{equation}
+
+1. **First Term**:
+   The term \( \delta x_0^T Q_0^{-1} \delta x_0 \) is a quadratic form. Its gradient is given by:
+   \[
+   \frac{\partial}{\partial \delta x_0} \left( \delta x_0^T Q_0^{-1} \delta x_0 \right) = 2 Q_0^{-1} \delta x_0.
+   \]
+
+2. **Second Term**:
+   For the term \( d_{1:L}^T R_{1:L}^{-1} d_{1:L} \), we apply the chain rule:
+   \[
+   \frac{\partial}{\partial \delta x_0} \left( d_{1:L}^T R_{1:L}^{-1} d_{1:L} \right) = -2 H^T R^{-1} d_{1:L}.
+   \]
+
+Combining both terms yields the gradient:
+\begin{equation}
+\frac{\partial J(\delta x_0)}{\partial \delta x_0} = 2 Q_0^{-1} \delta x_0 - 2 H^T R^{-1} d_{1:L}.
+\end{equation}
+
+\section{Mapping to Binary Variables}
+To express the optimization in terms of binary variables \( b \), we use a mapping matrix \( G \) such that:
+\[
+\delta x_0 \approx \frac{1}{\alpha} G b,
+\]
+where \( G \in \mathbb{R}^{N \times NZ} \) is defined as:
+\[
+G = \begin{bmatrix}
+g_0^T \\
+\vdots \\
+0 \\
+g^T
+\end{bmatrix},
+\]
+and \( g^T = \left( -2^{Z-1}, 2^{Z-2}, \ldots, 2^0 \right) \).
+
+\section{Cost Hamiltonian}
+The cost Hamiltonian \( H_C \) for the QAOA can be derived from the 4DVAR cost function. We need to represent \( J(\delta x_0) \) in terms of the binary variables \( b \).
+The cost function can be rewritten using the mapping:
+\[
+J(b) = \frac{1}{\alpha^2} \left( G b \right)^T Q_0^{-1} \left( G b \right) + \frac{1}{\alpha^2} d_{1:L}^T R_{1:L}^{-1} d_{1:L}.
+\]
+Expanding this expression, we have:
+\[
+J(b) = \frac{1}{\alpha^2} b^T G^T Q_0^{-1} G b + \frac{1}{\alpha^2} d_{1:L}^T R_{1:L}^{-1} d_{1:L}.
+\]
+Thus, we can express the cost Hamiltonian \( H_C \) as:
+\begin{equation}
+H_C = \frac{1}{\alpha^2} \left( G^T Q_0^{-1} G + \tilde{M}^T H^T R^{-1} H \tilde{M} \right),
+\end{equation}
+where \( \tilde{M} \) is related to the linear operator acting on the observation departure vector.
+
+The QAOA cost Hamiltonian can then be expressed in a quadratic binary form:
+\begin{equation}
+H_C = \sum_{i,j} Q_{ij} b_i b_j,
+\end{equation}
+where \( Q_{ij} \) incorporates contributions from both \( Q_0^{-1} \) and \( R_{1:L}^{-1} \).
+
+
+\end{document}
