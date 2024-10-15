@@ -1,0 +1,79 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\lstset{
+    backgroundcolor=\color{lightgray},
+    basicstyle=\ttfamily,
+    breaklines=true
+}
+
+\title{quantum optimization for climate data assimilation}
+\author{Brian Recktenwall-Calvet}
+\date{October 2024}
+\begin{document}
+\maketitle
+
+
+\section{Extrapolation from 4DVAR to Ising Hamiltonian}
+
+\subsection{4DVAR Formulation}
+
+The classical 4DVAR (Four-dimensional Variational Data Assimilation) cost function is derived from Bayes' theorem and is written as:
+\[
+J (\delta x_0) = \delta x_0^T Q_0^{-1} \delta x_0 + d_{1:L}^T R_{1:L}^{-1} d_{1:L},
+\]
+where:
+\begin{itemize}
+    \item \( \delta x_0 = x_0 - x^f_0 \in \mathbb{R}^N \) is the analysis increment,
+    \item \( Q_0 \in \mathbb{R}^{N \times N} \) is the background error covariance matrix,
+    \item \( d_{1:L} = y_{1:L}^o - H M_{1:L|0} (x^f_0 + \delta x_0) \in \mathbb{R}^{PL} \) is the observation departure,
+    \item \( R_{1:L} \in \mathbb{R}^{PL \times PL} \) is the observation error covariance matrix.
+\end{itemize}
+The goal of 4DVAR is to minimize this cost function, where \( M_{1:L|0} \) is the nonlinear model forecast from time \( t = 0 \) to time \( t = L \), and \( H \in \mathbb{R}^{P \times N} \) is the linear observation operator.
+
+\subsection{QUBO Approximation}
+
+To approximate the 4DVAR problem as a QUBO (Quadratic Unconstrained Binary Optimization) problem, we first linearize the cost function by fixing the tangent linear model \( M \) and the adjoint model \( M^T \) at each iteration. The quadratic approximation of the cost function is:
+\[
+\tilde{J} (\delta x_0) = \delta x_0^T \left( Q_0^{-1} + \tilde{M}^T_{1:L|0} H^T_{1:L} R_{1:L}^{-1} H_{1:L} \tilde{M}_{1:L|0} \right) \delta x_0 - 2 s^T_{1:L} R_{1:L}^{-1} H_{1:L} \tilde{M}_{1:L|0} \delta x_0 + C,
+\]
+where \( \tilde{M}_{1:L|0} \) is the linearized tangent model, and \( s_{1:L} = y^o_{1:L} - H x^f_{1:L} \).
+
+To represent the analysis increment \( \delta x_0 \) in terms of binary variables, we approximate \( \delta x_0 \) using a mapping matrix \( G \in \mathbb{R}^{N \times NZ} \), where each real number in \( \delta x_0 \) is represented by \( Z \) qubits:
+\[
+\delta x_0 \approx \frac{1}{\alpha} G b,
+\]
+where \( b \in \mathbb{R}^{NZ} \) is a binary vector with elements \( b_i \in \{0, 1\} \), and \( \alpha \) is a scaling parameter. Substituting this into the quadratic form gives the QUBO cost function:
+\[
+H(b) = b^T A b + u^T b + C,
+\]
+where \( A \in \mathbb{R}^{NZ \times NZ} \) and \( u \in \mathbb{R}^{NZ} \) are derived from the covariance matrices and linear operators.
+
+\subsection{Transformation to Ising Hamiltonian}
+
+To convert the QUBO formulation into an Ising Hamiltonian, we transform the binary variables \( b_i \in \{0, 1\} \) into spin variables \( s_i \in \{-1, +1\} \) using the transformation:
+\[
+b_i = \frac{1 + s_i}{2}.
+\]
+Substituting this into the QUBO form \( H(b) = b^T A b + u^T b + C \), we expand the quadratic and linear terms:
+\[
+H(s) = \frac{1}{4} s^T A s + \frac{1}{2} s^T A \mathbf{1} + \frac{1}{2} u^T s + \text{constant}.
+\]
+Thus, the Ising Hamiltonian can be expressed as:
+\[
+H_{\text{Ising}}(s) = \sum_{i=1}^{NZ} h_i s_i + \sum_{i < j} J_{ij} s_i s_j + \text{constant},
+\]
+where the local field \( h_i \) is:
+\[
+h_i = \frac{1}{2} A_{ii} + \frac{1}{2} u_i,
+\]
+and the coupling term \( J_{ij} \) is:
+\[
+J_{ij} = \frac{A_{ij}}{4}.
+\]
+
+\end{document}

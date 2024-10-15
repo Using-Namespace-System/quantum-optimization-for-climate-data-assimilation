@@ -1,0 +1,196 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\lstset{
+    backgroundcolor=\color{lightgray},
+    basicstyle=\ttfamily,
+    breaklines=true
+}
+
+\title{quantum optimization for climate data assimilation}
+\author{Brian Recktenwall-Calvet}
+\date{October 2024}
+\begin{document}
+
+\maketitle
+
+\section{Harrow-Hassidim-Lloyd (HHL) Algorithm}
+
+\subsection{Problem Setup}
+
+Consider the linear system:
+\[
+A \delta x = b
+\]
+where \( A \) is a Hermitian matrix. In 4DVAR, we can express this system with:
+\[
+A = Q_0^{-1} + H^T R^{-1} H
+\]
+and \( b \) as the observation vector.
+
+\subsection{Proof Outline}
+
+1. **Hermitian Property**: Show that \( A \) is Hermitian:
+   \[
+   A^\dagger = A \quad \text{(since both } Q_0 \text{ and } R \text{ are Hermitian)}
+   \]
+
+2. **Eigenvalue Separation**: Assume the eigenvalues of \( A \) are well-separated, i.e., there exists a gap \( \gamma > 0 \) such that:
+   \[
+   |\lambda_i - \lambda_j| \geq \gamma \quad \forall i \neq j
+   \]
+
+3. **Input State Preparation**: Prepare the quantum state \( |b\rangle \) from the vector \( b \):
+   \[
+   |b\rangle = \sum_{i=1}^n b_i |i\rangle
+   \]
+
+4. **Quantum Circuit Execution**: The HHL algorithm uses controlled rotations to prepare the state corresponding to \( A^{-1}|b\rangle \):
+   \[
+   U |0\rangle = |x\rangle = A^{-1}|b\rangle
+   \]
+
+5. **Measurement**: Measure the state to retrieve information about \( \delta x \):
+   \[
+   \text{Output: } |\delta x\rangle \text{ with probability related to the amplitude of the solution.}
+   \]
+
+6. **Complexity**: The complexity of HHL is:
+   \[
+   O\left(\frac{\log(n)}{\epsilon}\right)
+   \]
+   where \( \epsilon \) is the desired precision.
+
+
+\section{Variational Quantum Eigensolver (VQE)}
+
+\subsection{Problem Setup}
+
+We relate the linear system \( A \delta x = b \) to an eigenvalue problem:
+\[
+A |x\rangle = \lambda |x\rangle
+\]
+where \( \lambda \) is the eigenvalue.
+
+\subsection{Proof Outline}
+
+1. **Cost Function Representation**: Define the cost function related to 4DVAR:
+   \[
+   J(x) = \langle x | A | x\rangle - \langle b | x\rangle
+   \]
+
+2. **State Preparation**: Prepare an ansatz state:
+   \[
+   |x\rangle = U(\theta) |0\rangle
+   \]
+   where \( U \) is a parameterized quantum circuit.
+
+3. **Variational Optimization**: Optimize parameters \( \theta \) to minimize:
+   \[
+   J(\theta) = \langle x | A | x\rangle - \langle b | x\rangle
+   \]
+
+4. **Measurement**: Measure the expectation values to evaluate the cost function.
+
+5. **Convergence**: VQE iteratively refines \( \theta \) using classical optimization:
+   \[
+   \theta \gets \theta - \eta \nabla J(\theta)
+   \]
+
+6. **Complexity**: The complexity is polynomial in the number of parameters and layers of the circuit.
+
+
+\section{Quantum Approximate Optimization Algorithm (QAOA)}
+
+\subsection{Problem Setup}
+
+To apply QAOA to 4DVAR, we express the optimization problem as:
+\[
+\text{Minimize } J(x) = \sum_{i} c_i x_i
+\]
+
+\subsection{Proof Outline}
+
+1. **Cost Function Encoding**: Map the 4DVAR cost function to a combinatorial optimization format:
+   \[
+   J(x) = \langle \psi | C | \psi \rangle
+   \]
+
+2. **Circuit Construction**: Construct the QAOA circuit:
+   \[
+   |\psi(\gamma, \beta)\rangle = e^{-i \beta_1 H_B} e^{-i \gamma_1 H_C} \cdots e^{-i \beta_p H_B} e^{-i \gamma_p H_C} |0\rangle
+   \]
+   where \( H_B \) and \( H_C \) represent the mixing and cost Hamiltonians, respectively.
+
+3. **Optimization**: Optimize \( \gamma \) and \( \beta \):
+   \[
+   \min_{\gamma, \beta} J(\gamma, \beta) = \langle \psi(\gamma, \beta) | C | \psi(\gamma, \beta) \rangle
+   \]
+
+4. **Measurement**: Measure the final state to retrieve the solution.
+
+5. **Complexity**: The complexity grows with \( p \) (number of layers) and is exponential in general, but can outperform classical for specific structured problems.
+
+
+\section{Quantum Linear Systems Algorithm (QLSA)}
+
+\subsection{Problem Setup}
+
+For the linear system \( A \delta x = b \), we apply QLSA.
+
+\subsection{Proof Outline}
+
+1. **Generalization**: Show that QLSA can handle various types of matrices, including non-Hermitian ones.
+
+2. **Matrix Preparation**: Prepare the matrix \( A \) using quantum circuits.
+
+3. **Quantum State Preparation**: Prepare \( |b\rangle \) as before.
+
+4. **Solving Method**: QLSA involves a combination of techniques, including phase estimation and quantum Fourier transform:
+   \[
+   U |0\rangle = |x\rangle = A^{-1}|b\rangle
+   \]
+
+5. **Output Measurement**: Measure the quantum state to obtain \( \delta x \).
+
+6. **Complexity**: The complexity remains polynomial similar to HHL, with potential broader applicability.
+
+
+\section{Quantum Gradient Descent}
+
+\subsection{Problem Setup}
+
+Optimize the cost function \( J(x) \) in 4DVAR:
+\[
+\delta x = -\alpha \nabla J(x)
+\]
+
+\subsection{Proof Outline}
+
+1. **Gradient Calculation**: Use quantum techniques to compute the gradient efficiently:
+   \[
+   \nabla J(x) = \left( \frac{\partial J}{\partial x_1}, \frac{\partial J}{\partial x_2}, \ldots, \frac{\partial J}{\partial x_n} \right)
+   \]
+
+2. **Quantum Circuit for Gradient**: Design a quantum circuit to approximate gradients using quantum amplitude estimation.
+
+3. **Update Rule**: Update the state iteratively:
+   \[
+   |x_{k+1}\rangle = |x_k\rangle - \alpha \nabla J(x_k)
+   \]
+
+4. **Convergence Analysis**: Analyze the convergence rates compared to classical gradient descent:
+   \[
+   J(x_{k+1}) \leq J(x_k) - \frac{\alpha}{2} \|\nabla J(x_k)\|^2
+   \]
+
+5. **Complexity**: The quantum advantage can lead to faster convergence in high-dimensional spaces.
+
+
+\end{document}
+
+

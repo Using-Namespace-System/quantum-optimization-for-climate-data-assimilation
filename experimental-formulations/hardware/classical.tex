@@ -1,0 +1,104 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{graphicx}
+\usepackage{hyperref}
+
+\title{Numerical Methods for Solving Linear Systems}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+In the context of solving linear systems derived from the reformulated 4DVAR approach, several numerical methods can be employed. This document outlines the key methods, their mathematical foundations, and their convergence properties.
+
+\section{Linear System Representation}
+Consider the linear system represented as:
+\begin{equation}
+A \mathbf{x} = \mathbf{b},
+\end{equation}
+where \( A \) is a matrix, \( \mathbf{x} \) is the vector of unknowns, and \( \mathbf{b} \) is the known vector.
+
+\section{1. Direct Methods}
+
+\subsection{Gaussian Elimination}
+Gaussian elimination is a method for solving linear systems by transforming the system into an upper triangular matrix form.
+
+\begin{itemize}
+    \item **Steps**: 
+    \begin{enumerate}
+        \item Forward elimination to create an upper triangular matrix.
+        \item Back substitution to solve for \( \mathbf{x} \).
+    \end{enumerate}
+    \item **Complexity**: \( O(n^3) \) for an \( n \times n \) matrix.
+    \item **Applicability**: Works well for small to moderate-sized systems; can be unstable for ill-conditioned matrices.
+\end{itemize}
+
+\subsection{LU Decomposition}
+LU decomposition factors \( A \) into a lower triangular matrix \( L \) and an upper triangular matrix \( U \).
+
+\begin{itemize}
+    \item **Steps**: 
+    \begin{enumerate}
+        \item Decompose \( A \) such that \( A = LU \).
+        \item Solve \( L\mathbf{y} = \mathbf{b} \) for \( \mathbf{y} \).
+        \item Solve \( U\mathbf{x} = \mathbf{y} \).
+    \end{enumerate}
+    \item **Complexity**: \( O(n^3) \).
+    \item **Applicability**: More stable than Gaussian elimination; useful for multiple right-hand sides.
+\end{itemize}
+
+\subsection{Cholesky Decomposition}
+Cholesky decomposition is applicable when \( A \) is symmetric and positive definite, factorizing \( A \) into \( A = LL^T \).
+
+\begin{itemize}
+    \item **Steps**: Follow similar steps as LU but for symmetric matrices.
+    \item **Complexity**: \( O(n^3) \).
+    \item **Applicability**: Efficient for large, sparse, positive definite matrices.
+\end{itemize}
+
+\section{2. Iterative Methods}
+
+\subsection{Jacobi Method}
+The Jacobi method is an iterative technique that updates each variable based on the previous values.
+
+\begin{itemize}
+    \item **Update Formula**:
+    \[
+    x_i^{(k+1)} = \frac{1}{a_{ii}} \left( b_i - \sum_{j \neq i} a_{ij} x_j^{(k)} \right)
+    \]
+    \item **Convergence**: Converges if \( A \) is strictly diagonally dominant or symmetric positive definite.
+    \item **Complexity**: Depends on convergence; typically slower than direct methods.
+\end{itemize}
+
+\subsection{Gauss-Seidel Method}
+The Gauss-Seidel method improves upon the Jacobi method by using the most recent values as soon as they are available.
+
+\begin{itemize}
+    \item **Update Formula**:
+    \[
+    x_i^{(k+1)} = \frac{1}{a_{ii}} \left( b_i - \sum_{j < i} a_{ij} x_j^{(k+1)} - \sum_{j > i} a_{ij} x_j^{(k)} \right)
+    \]
+    \item **Convergence**: Faster convergence than Jacobi under similar conditions.
+    \item **Complexity**: Typically requires fewer iterations than Jacobi.
+\end{itemize}
+
+\subsection{Conjugate Gradient Method}
+The conjugate gradient method is designed for large, sparse systems where \( A \) is symmetric positive definite.
+
+\begin{itemize}
+    \item **Steps**:
+    \begin{enumerate}
+        \item Initialize \( \mathbf{x}^{(0)} \).
+        \item Iterate using the residuals and search directions.
+    \end{enumerate}
+    \item **Convergence**: Converges in at most \( n \) iterations, where \( n \) is the dimension of the system.
+    \item **Complexity**: \( O(n^2) \) per iteration, but often converges in significantly fewer iterations than \( n \).
+\end{itemize}
+
+\section{Conclusion}
+In summary, various numerical methods can be employed to solve linear systems arising from the reformulated 4DVAR approach. Direct methods such as Gaussian elimination, LU, and Cholesky decompositions are robust for small to medium-sized problems, while iterative methods like Jacobi, Gauss-Seidel, and conjugate gradient are effective for large, sparse systems. The choice of method will depend on the specific properties of the matrix \( A \) and the computational resources available.
+
+\end{document}

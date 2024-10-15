@@ -17,10 +17,6 @@
 \begin{document}
 \maketitle
 
-\section{Introduction}
-
-In numerical weather prediction and data assimilation, the Tangent Linear Model (TLM) plays a critical role in the 4DVAR framework, which is inherently linked to Bayes' theorem. This document outlines these relationships mathematically.
-
 \section{4DVAR Cost Function}
 
 The cost function in the 4DVAR framework is defined as:
@@ -100,8 +96,5 @@ J(\mathbf{x}) = -\log P(\mathbf{x} | \mathbf{y}) + C
 
 where \( C \) is a constant that does not depend on \( \mathbf{x} \).
 
-\section{Conclusion}
-
-The Tangent Linear Model facilitates the efficient computation of gradients and the propagation of perturbations in the 4DVAR framework. By linking the cost function to Bayes' theorem, we understand how minimizing \( J(\mathbf{x}) \) corresponds to maximizing the posterior probability \( P(\mathbf{x} | \mathbf{y}) \), thereby enhancing state estimates based on available observations.
 
 \end{document}

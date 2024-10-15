@@ -1,0 +1,99 @@
+\documentclass{article}
+\usepackage{amsmath, amssymb, amsthm}
+
+\title{Solving 4DVAR within Integer Constraints using Diophantine Equations}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+
+Dr. Ed Gerck suggested to me that the 4DVAR data assimilation problem could be reformulated and solved under the constraints of a non-probabilistic, integer-based framework, using Diophantine equations. This is achieved by leveraging discrete integer representations of the Schrödinger equation for eigenvalues, reformulated as a Diophantine system. The objective is to minimize the 4DVAR cost function with all quantities represented as integers, and solve the resulting optimization problem using quantum or classical integer-based methods.
+
+\section{Reformulating the Schrödinger Equation}
+
+The time-independent Schrödinger equation is given by:
+
+\[
+H \psi = E \psi
+\]
+
+where \( H \) is the Hamiltonian operator, \( \psi \) is the wavefunction, and \( E \) is the energy eigenvalue. To operate within integer constraints, we discretize the system. The wavefunction \( \psi_n \), energy eigenvalue \( E_n \), and the Hamiltonian \( H_n \) now all represent integer-valued quantities. The discretized form of the Schrödinger equation becomes:
+
+\[
+H_n \psi_n = E_n \psi_n
+\]
+
+where \( H_n \) is an integer-valued operator on a lattice, \( E_n \) is an integer eigenvalue, and \( \psi_n \) is an integer wavefunction. This reformulation ensures that all values are integers, fitting within the framework of Diophantine equations.
+
+\section{Diophantine Equations in Discrete Systems}
+
+A Diophantine equation expresses relationships where all variables must take integer values. The integer-valued Schrödinger equation from the previous section can be written as a Diophantine equation of the form:
+
+\[
+f(H_n, \psi_n, E_n) = 0
+\]
+
+with the constraint that \( H_n \), \( \psi_n \), and \( E_n \) are all integers. This provides the necessary framework for solving quantum-like systems with integer constraints.
+
+\section{Formulating the 4DVAR Cost Function}
+
+The cost function in 4DVAR is typically given by:
+
+\[
+J (\delta x_0) = \delta x_0^T Q_0^{-1} \delta x_0 + d_{1:L}^T R_{1:L}^{-1} d_{1:L}
+\]
+
+where:
+\begin{itemize}
+    \item \( \delta x_0 = x_0 - x^f_0 \) is the analysis increment,
+    \item \( Q_0^{-1} \) is the background error covariance matrix,
+    \item \( d_{1:L} \) is the observation departure vector,
+    \item \( R_{1:L}^{-1} \) is the observation error covariance matrix.
+\end{itemize}
+
+To operate within integer constraints, we approximate all quantities as integers. This includes the state increments \( \delta x_0 \), the covariance matrices \( Q_0^{-1} \) and \( R_{1:L}^{-1} \), and the observation departures \( d_{1:L} \). The resulting approximation of the cost function is:
+
+\[
+\tilde{J}(\delta x_0) = \delta x_0^T Q_0^{-1} \delta x_0 + \tilde{d}_{1:L}^T R_{1:L}^{-1} \tilde{d}_{1:L}
+\]
+
+where \( \tilde{d}_{1:L} \) are the integer-valued observation departures. All quantities now fit into the Diophantine framework as integer-based variables.
+
+\section{Mapping to Integer-Based Optimization}
+
+Next, we map the integer reformulation of the 4DVAR cost function to a Quadratic Unconstrained Binary Optimization (QUBO) problem. We represent the analysis increment \( \delta x_0 \) using binary variables. For \( Z \) qubits, the state increment is approximated as:
+
+\[
+\delta x_0 \approx \frac{1}{\alpha} G b
+\]
+
+where:
+\begin{itemize}
+    \item \( G \) is a mapping matrix,
+    \item \( b \in \mathbb{R}^{NZ} \) is a binary vector,
+    \item \( \alpha \) is a scaling parameter.
+\end{itemize}
+
+The reformulated cost function becomes:
+
+\[
+\tilde{J}(\delta x_0) \approx H(b) = b^T A b + u^T b + C
+\]
+
+where:
+\begin{itemize}
+    \item \( A = \frac{1}{\alpha^2} G^T \left( Q_0^{-1} + \tilde{M}^T_{1:L|0} H^T_{1:L} R_{1:L}^{-1} H_{1:L} \tilde{M}_{1:L|0} \right) G \),
+    \item \( u^T = -\frac{2}{\alpha} s^T_{1:L} R_{1:L}^{-1} H_{1:L} \tilde{M}_{1:L|0} G \),
+    \item \( C \) is a constant term irrelevant to the minimization.
+\end{itemize}
+
+This formulation ensures that the optimization problem fits within an integer-based Diophantine framework and is ready for quantum or classical optimization.
+
+\section{Conclusion}
+
+By discretizing the Schrödinger equation into an integer-based Diophantine framework and reformulating the 4DVAR cost function into a quadratic form with integer variables, we show that 4DVAR can be solved within these constraints. The resulting problem is mapped to a QUBO problem, suitable for optimization on quantum or classical systems.
+
+\end{document}

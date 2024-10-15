@@ -17,10 +17,6 @@
 \begin{document}
 \maketitle
 
-\section{Introduction}
-
-The Tangent Linear Model (TLM) plays a critical role in the 4DVAR framework, which is inherently linked to Bayes' theorem in the context of data assimilation. This document outlines these relationships mathematically.
-
 \section{Bayes' Theorem in Data Assimilation}
 
 Bayes' theorem provides a probabilistic framework for updating beliefs based on new evidence. In state estimation, it can be expressed as:
@@ -67,8 +63,5 @@ In the context of 4DVAR, the likelihood term \( P(\mathbf{y} | \mathbf{x}) \) ca
 
 where \( \mathbf{H} \) represents the Jacobian of the observation operator, which can be computed using the TLM.
 
-\section{Conclusion}
-
-The TLM serves as a computational tool within the 4DVAR framework that facilitates efficient calculation of gradients, essential for optimizing the cost function that embodies Bayes' theorem. The TLM helps linearize the model, enabling evaluation of how changes in state affect the likelihood of observations, thus facilitating Bayesian updating of the state estimate.
 
 \end{document}

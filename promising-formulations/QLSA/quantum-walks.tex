@@ -1,0 +1,104 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\lstset{
+    backgroundcolor=\color{lightgray},
+    basicstyle=\ttfamily,
+    breaklines=true
+}
+
+\title{quantum optimization for climate data assimilation}
+\author{Brian Recktenwall-Calvet}
+\date{October 2024}
+\begin{document}
+
+\maketitle
+
+The Four-Dimensional Variational (4D-Var) data assimilation problem involves estimating the state of a dynamic system over a period of time by minimizing the difference between observed data and model predictions. The Quantum Linear Systems Algorithm (QLSA) provides an efficient method to solve the linear systems that arise in optimization problems like 4D-Var.
+
+\section{Formulation of the 4D-Var Problem}
+
+The 4D-Var problem can be expressed mathematically as:
+
+\begin{equation}
+\min_x \frac{1}{2} \| Hx - d \|^2 + \frac{1}{2} \| B^{-1}(x - x_0) \|^2
+\end{equation}
+
+where:
+\begin{itemize}
+    \item \( x \) is the state vector to be estimated.
+    \item \( H \) is the observation operator (linear transformation).
+    \item \( d \) is the vector of observed data.
+    \item \( B \) is the background error covariance matrix.
+    \item \( x_0 \) is the background state estimate.
+\end{itemize}
+
+\section{Constructing the Objective Function}
+
+Rearranging the terms gives the objective function:
+
+\begin{equation}
+J(x) = \frac{1}{2} (Hx - d)^T(Hx - d) + \frac{1}{2} (x - x_0)^T B^{-1} (x - x_0)
+\end{equation}
+
+\section{Gradient and Hessian Computation}
+
+The gradient of \( J(x) \) can be computed as follows:
+
+\begin{equation}
+\nabla J(x) = H^T(Hx - d) + B^{-1}(x - x_0)
+\end{equation}
+
+To find the optimal \( x \), we need to solve:
+
+\begin{equation}
+\nabla J(x) = 0
+\end{equation}
+
+This leads to the linear system:
+
+\begin{equation}
+(H^TH + B^{-1})x = H^Td + B^{-1}x_0
+\end{equation}
+
+\section{Linear Systems and QLSA}
+
+The problem is now reduced to solving the linear system:
+
+\begin{equation}
+Ax = b
+\end{equation}
+
+where:
+\begin{itemize}
+    \item \( A = H^TH + B^{-1} \)
+    \item \( b = H^Td + B^{-1}x_0 \)
+\end{itemize}
+
+\section{Applying the Quantum Linear Systems Algorithm}
+
+QLSA provides a quantum approach to solve linear systems efficiently, particularly when \( A \) is large. The steps include:
+
+\begin{enumerate}
+    \item \textbf{Preparation}: Encode the linear system \( Ax = b \) into a quantum state.
+    \item \textbf{Quantum Phase Estimation}: Use phase estimation to obtain eigenvalues of \( A \).
+    \item \textbf{Quantum Walks}: Utilize quantum walks to find the solution vector \( x \).
+    \item \textbf{Measurement}: Measure the quantum state to retrieve the classical solution.
+\end{enumerate}
+
+\section{Complexity Analysis}
+
+QLSA offers a polynomial speedup for solving linear systems compared to classical methods. Specifically, if \( A \) is invertible, QLSA can solve the system in:
+
+\begin{equation}
+O(\log(N) \cdot \text{poly}(1/\epsilon))
+\end{equation}
+
+where \( N \) is the number of variables and \( \epsilon \) is the desired accuracy.
+
+
+\end{document}
