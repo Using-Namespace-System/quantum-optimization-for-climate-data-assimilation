@@ -1,0 +1,120 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+
+\title{Embedding Global 4D Multivariable Climate Data into Quantum States}
+\author{Brian Recktenwall-Calvet}
+\date{October 2024}
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+Embedding real global 4-dimensional multivariable climate data into a quantum state using amplitude embedding involves several steps. This document outlines the process, discusses the computational intensity of embedding such data, and includes calculations for the number of qubits needed for a standard size of global 4D climate data.
+
+\section{Step-by-Step Process for Embedding 4D Climate Data}
+
+\subsection{Step 1: Data Collection and Preprocessing}
+
+\subsubsection{1. Gather the Data}
+Collect the 4D climate data, which can include variables such as temperature, humidity, pressure, and wind speed across spatial dimensions (latitude, longitude) and time. The data can be represented as a tensor \( D[t, x, y, z] \), where:
+\begin{itemize}
+    \item \( t \) is time,
+    \item \( x \) is latitude,
+    \item \( y \) is longitude,
+    \item \( z \) is the variable (e.g., temperature).
+\end{itemize}
+
+\subsubsection{2. Flatten the Data}
+Flatten the multidimensional data into a 1D array or matrix. For a global climate dataset at a 1 m grid, the number of grid points can be calculated as follows.
+
+\subsubsection{3. Calculate the Number of Grid Points}
+\begin{itemize}
+    \item The Earth's surface area is approximately \( 510 \times 10^6 \) km\(^2\).
+    \item With a grid resolution of 1 m, the total number of grid points is:
+    \[
+    \text{Total grid points} = \frac{510 \times 10^6 \text{ km}^2}{1 \text{ km}^2} \times (1000 \text{ m/km})^2 = 510 \times 10^{12} \text{ points}.
+    \]
+\end{itemize}
+
+\subsubsection{4. Time and Variable Dimensions}
+Assuming a month of hourly timesteps, we have:
+\begin{itemize}
+    \item \( T = 24 \times 30 = 720 \) hours,
+    \item \( Z = 10 \) variables.
+\end{itemize}
+
+\subsubsection{5. Total Data Points}
+The total number of data points can be calculated as:
+\[
+m = T \times \text{Total grid points} \times Z = 720 \times 510 \times 10^{12} \times 10.
+\]
+Calculating this gives:
+\[
+m = 720 \times 5100 \times 10^{12} = 3.672 \times 10^{15} \text{ data points}.
+\]
+
+\subsubsection{6. Number of Qubits Needed}
+The number of qubits needed is:
+\[
+n = \lceil \log_2(m) \rceil = \lceil \log_2(3.672 \times 10^{15}) \rceil \approx 54.
+\]
+
+\subsection{Step 2: Prepare the Quantum State}
+
+\subsubsection{7. Initialize the Quantum State}
+Create a quantum state \( |\psi\rangle \) where each basis state corresponds to the normalized data points:
+\[
+|\psi\rangle = \sum_{i=0}^{m-1} \tilde{d}_i |i\rangle.
+\]
+
+\subsection{Step 3: Encode the Quantum State}
+
+\subsubsection{8. Quantum Circuit Preparation}
+Use a quantum circuit to prepare the quantum state. Each data point \( \tilde{d}_i \) will be encoded using rotation gates. The rotation angle \( \theta \) for each data point can be set as:
+\[
+\theta_i = 2 \arccos(\tilde{d}_i).
+\]
+
+\subsubsection{9. Execute the Circuit}
+Run the quantum circuit on a quantum computer or simulator. After preparing the state, measure the qubits to ensure the desired amplitude encoding is achieved.
+
+\section{Handling Large Numbers of Qubits}
+
+If the calculated number of qubits is too large for current quantum hardware, consider the following strategies:
+
+\begin{itemize}
+    \item \textbf{Data Reduction}: Use techniques such as Principal Component Analysis (PCA) to reduce the dimensionality of data while retaining the most significant features.
+    \item \textbf{Coarse Graining}: Aggregate the data over larger grid cells (e.g., 10 km x 10 km) to reduce the total number of grid points.
+    \item \textbf{Subsampling}: Analyze a representative subset of the data instead of the entire dataset, which can significantly decrease the number of required qubits.
+    \item \textbf{Hybrid Approaches}: Combine classical and quantum methods, processing initial steps classically before transitioning to quantum algorithms for specific tasks.
+    \item \textbf{Time Slicing}: Consider processing the data in slices, focusing on a subset of the time dimension at a time to keep the number of qubits manageable.
+\end{itemize}
+
+\section{Computational Intensity of Embedding}
+
+\subsection{1. Time Complexity}
+\begin{itemize}
+    \item \textbf{Data Preprocessing}: Flattening and normalizing the data will take \( O(m) \) time, where \( m \) is the number of data points.
+    \item \textbf{Quantum Circuit Preparation}: The preparation of the quantum state involves \( m \) rotations, leading to a complexity of \( O(m) \).
+    \item \textbf{Overall}: The total time complexity for the embedding process remains \( O(m) \).
+\end{itemize}
+
+\subsection{2. Space Complexity}
+\begin{itemize}
+    \item \textbf{Storage of Data}: Normalized amplitudes require \( O(m) \) space.
+    \item \textbf{Quantum State}: The representation in qubits takes \( O(n) \) space, where \( n = \lceil \log_2(m) \rceil \).
+\end{itemize}
+
+\subsection{3. Scalability and Hardware Limitations}
+\begin{itemize}
+    \item \textbf{Qubit Limitations}: Current quantum hardware typically supports a limited number of qubits. If \( m \) is large, can face challenges regarding qubit availability.
+    \item \textbf{Circuit Depth and Fidelity}: The depth of the quantum circuit (number of gates) affects execution time and error rates. Ensuring high fidelity for gates is critical, especially for large datasets.
+    \item \textbf{Potential Quantum Preprocessing}: Consider using classical preprocessing to reduce the data dimensionality before quantum embedding, such as PCA or clustering techniques.
+\end{itemize}
+
+\section{Conclusion}
+Embedding 4-dimensional climate data into a quantum state using amplitude embedding requires careful data preparation, normalization, and quantum state encoding. While the theoretical computational complexity remains linear in terms of the number of data points, practical implementation will depend heavily on the capabilities of quantum hardware and the size of the dataset.
+
+\end{document}

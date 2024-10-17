@@ -1,0 +1,121 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{graphicx}
+
+\title{Diophantine Quantum Subspace Expansion for 4D-Var}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+
+The Four-Dimensional Variational (4D-Var) data assimilation problem can be framed as minimizing a cost function given by:
+
+\begin{equation}
+J(x) = \frac{1}{2} \| Hx - d \|^2 + \frac{1}{2} \| B^{-1}(x - x_0) \|^2,
+\end{equation}
+
+where \( H \) is the observation operator, \( d \) is the observed data vector, \( B \) is the background error covariance matrix, and \( x_0 \) is the prior estimate. 
+
+We can express this in a linear form:
+
+\begin{equation}
+Ax = b,
+\end{equation}
+
+where
+
+\[
+A = H^TH + B^{-1}, \quad b = H^Td + B^{-1}x_0.
+\]
+
+We will explore the Diophantine formulation of the quantum subspace expansion method to solve this system.
+
+\section{Diophantine System Formulation}
+
+A Diophantine system involves finding integer solutions \( x \in \mathbb{Z}^n \) such that:
+
+\begin{equation}
+A \mathbf{z} = \mathbf{b}, \quad \text{with } \mathbf{z} \in \mathbb{Z}^n.
+\end{equation}
+
+In the context of 4D-Var, the goal is to find integer solutions \( \mathbf{z} \) that minimize the cost function \( J(x) \).
+
+### Step 1: Quantum Subspace Definition
+
+Define a subspace \( S \) spanned by a set of basis vectors \( \{|v_1\rangle, |v_2\rangle, \ldots, |v_k\rangle\} \) where each basis vector corresponds to a candidate solution in \( \mathbb{C}^n \). The expansion within this subspace can be represented as:
+
+\[
+|x\rangle = \sum_{i=1}^{k} c_i |v_i\rangle,
+\]
+
+where \( c_i \) are complex coefficients to be determined.
+
+### Step 2: Projection onto the Subspace
+
+We can project the observed data \( |b\rangle \) onto the subspace \( S \):
+
+\begin{equation}
+|b\rangle \approx \sum_{i=1}^{k} \alpha_i |v_i\rangle,
+\end{equation}
+
+where \( \alpha_i \) are coefficients representing the projection.
+
+### Step 3: Formulation of Integer Constraints
+
+The integer solutions can be obtained by framing the projection as a Diophantine equation. We reformulate the problem as:
+
+\begin{equation}
+A \mathbf{z} \approx \mathbf{b},
+\end{equation}
+
+leading to:
+
+\[
+\sum_{j=1}^{m} a_{ij} z_j = b_i, \quad \forall i,
+\]
+
+where \( a_{ij} \in \mathbb{Z} \).
+
+### Step 4: Quantum Implementation of the Subspace Expansion
+
+1. **State Preparation:** Prepare the quantum state \( |b\rangle \) representing the observed data.
+
+2. **Subspace Encoding:** Encode the subspace \( S \) into the quantum state using a quantum circuit that constructs the basis states \( |v_i\rangle \).
+
+3. **Optimization Procedure:** Use a variational approach to optimize the coefficients \( c_i \):
+
+\begin{equation}
+\min_{\mathbf{c}} \left\| A\left(\sum_{i=1}^{k} c_i |v_i\rangle\right) - |b\rangle \right\|^2.
+\end{equation}
+
+4. **Quantum Measurements:** Measure the state to extract the coefficients \( c_i \) that correspond to the integer solutions.
+
+### Step 5: Solving the Diophantine System
+
+The optimization leads to finding \( \mathbf{z} \):
+
+\begin{equation}
+\mathbf{z} = \left( A^T A \right)^{-1} A^T \mathbf{b},
+\end{equation}
+
+which may yield non-integer solutions. To ensure integer constraints, one can apply rounding or integer programming techniques to adjust \( \mathbf{z} \) to the nearest integers that satisfy the original equations.
+
+### Step 6: Validating the Solution
+
+To validate the integer solution, we check:
+
+\begin{equation}
+A \mathbf{z}_{\text{int}} = \mathbf{b}_{\text{int}},
+\end{equation}
+
+where \( \mathbf{z}_{\text{int}} \) represents the adjusted integer solution and \( \mathbf{b}_{\text{int}} \) is the corresponding integer observation.
+
+### Conclusion
+
+This Diophantine approach utilizing quantum subspace expansion provides a framework for finding integer solutions to the linear system arising from the 4D-Var problem. By projecting onto a suitable subspace and employing quantum techniques, we can effectively solve the data assimilation problem while ensuring integer constraints.
+
+\end{document}

@@ -1,0 +1,153 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{graphicx}
+
+\title{Quantum Approaches to Solving 4D-Var}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+
+The Four-Dimensional Variational (4D-Var) data assimilation problem can be formulated as:
+
+\begin{equation}
+\min_x J(x) = \frac{1}{2} \| Hx - d \|^2 + \frac{1}{2} \| B^{-1}(x - x_0) \|^2
+\end{equation}
+
+where \( H \) is the observation operator, \( d \) is the observed data, \( B \) is the background error covariance matrix, and \( x_0 \) is the prior estimate.
+
+This problem can be transformed into a linear system:
+
+\begin{equation}
+Ax = b
+\end{equation}
+
+with
+
+\[
+A = H^TH + B^{-1}, \quad b = H^Td + B^{-1}x_0
+\]
+
+Below, we explore various quantum algorithms for solving this linear system.
+
+\section{1. Quantum Approximate Optimization Algorithm (QAOA)}
+
+QAOA can be applied to minimize the cost function associated with the linear system:
+
+\begin{equation}
+\min_{\theta} J(\theta) = \left\| A |x(\theta)\rangle - |b\rangle \right\|^2
+\end{equation}
+
+**Mathematical Insight:**
+
+Expanding the cost function:
+
+\[
+J(\theta) = \langle x(\theta)| A^TA |x(\theta)\rangle - 2\text{Re}\left(\langle x(\theta)| A |b\rangle\right) + \langle b|b\rangle
+\]
+
+Optimize parameters \( \theta \) using classical techniques, iteratively refining \( |x(\theta)\rangle \) to minimize \( J(\theta) \).
+
+\section{2. Quantum Fourier Transform (QFT)}
+
+Using QFT, the problem can be transformed to facilitate the solving of the system:
+
+\begin{equation}
+QFT(|b\rangle) = \sum_{j=0}^{N-1} b_j |j\rangle
+\end{equation}
+
+**Mathematical Insight:**
+
+1. Transform \( |b\rangle \) into frequency space.
+2. Apply the linear operator in the transformed domain, yielding:
+
+\[
+|b'\rangle = A |x\rangle
+\]
+
+3. Perform the inverse QFT to return to the computational basis, facilitating the solution.
+
+\section{3. Quantum Subspace Expansion}
+
+In this approach, define a subspace \( S \) of possible solutions:
+
+\[
+S = \text{span}\{|v_1\rangle, |v_2\rangle, \ldots, |v_k\rangle\}
+\]
+
+**Mathematical Insight:**
+
+1. Project \( |b\rangle \) onto \( S \):
+
+\[
+|b\rangle \approx \sum_{i=1}^{k} c_i |v_i\rangle
+\]
+
+2. Solve the projected linear system:
+
+\[
+A |x\rangle = |b\rangle
+\]
+
+using quantum search methods.
+
+\section{4. Variational Quantum Eigensolver (VQE)}
+
+The VQE can be used to minimize the following cost function:
+
+\begin{equation}
+J(\theta) = \left\| A |x(\theta)\rangle - |b\rangle \right\|^2
+\end{equation}
+
+**Mathematical Insight:**
+
+Expanding the cost function yields:
+
+\[
+J(\theta) = \langle x(\theta)| A^TA |x(\theta)\rangle - 2\text{Re}\left(\langle x(\theta)| A |b\rangle\right) + \langle b|b\rangle
+\]
+
+Optimizing \( \theta \) leads to a state \( |x(\theta)\rangle \) that approximates the solution to the 4D-Var problem.
+
+\section{5. Quantum Machine Learning Approaches}
+
+Incorporating machine learning, we define a quantum model \( f: \mathbb{C}^n \rightarrow \mathbb{C}^n \):
+
+\[
+f(|x\rangle) = |y\rangle \text{ such that } Ax \approx b
+\]
+
+**Mathematical Insight:**
+
+1. Train the model with a loss function based on the system:
+
+\[
+L = \left\| Ax - b \right\|^2
+\]
+
+2. Optimize the model parameters using quantum optimization techniques.
+
+\section{6. Quantum Walks}
+
+Model the system as a graph \( G \):
+
+- Vertices represent possible states.
+- Edges represent transitions based on \( A \).
+
+**Mathematical Insight:**
+
+1. Define a quantum walk operator \( U \):
+
+\[
+U |x\rangle = \sum_{y \in \text{neighbors}(x)} p_{xy} |y\rangle
+\]
+
+2. Explore the state space using \( U \) to converge on a solution to the system \( Ax = b \).
+
+
+
+\end{document}

@@ -1,0 +1,104 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+
+\begin{document}
+
+\title{Proof: Mapping the 4DVAR Cost Function to a Hamiltonian}
+\author{Brian Recktenwall-Calvet}
+\date{October 2024}
+\maketitle
+
+\section*{Objective}
+We aim to demonstrate that the discrete 4DVAR cost function can be expressed in terms of a Hamiltonian suitable for quantum optimization, using amplitude embedding.
+
+\section{Definition of the Cost Function}
+The discrete 4DVAR cost function is defined as:
+
+\[
+J(\delta x_0) = \delta x_0^T Q_0^{-1} \delta x_0 + \sum_{k=1}^{L} d_k^T R_k^{-1} d_k,
+\]
+
+where \( d_k = y_k^o - H_k(x_k) \) is the innovation vector, and \( \delta x_0 \) is the analysis increment at the initial time step.
+
+\section{Substituting the Innovation Vector}
+We express the observation departure term as:
+
+\[
+d_k = y_k^o - H_k(x_k),
+\]
+
+which leads to the following substitution in the cost function:
+
+\[
+J(\delta x_0) = \delta x_0^T Q_0^{-1} \delta x_0 + \sum_{k=1}^{L} (y_k^o - H_k(x_k))^T R_k^{-1} (y_k^o - H_k(x_k)).
+\]
+
+\section{Expressing the Analysis State}
+The analysis state at time step \( k \) can be expressed in terms of the background state and the increment:
+
+\[
+x^a_k = x^f_k + \delta x_k.
+\]
+
+Substituting this into the observation operator gives:
+
+\[
+H_k(x^a_k) = H_k(x^f_k + \delta x_k) = H_k(x^f_k) + H_k'(\delta x_k),
+\]
+
+where \( H_k' \) denotes the derivative of the observation operator.
+
+\section{Formulating the Hamiltonian}
+We rewrite the cost function in terms of a Hamiltonian \( H(b) \):
+
+\[
+H(b) = (G b)^T Q_0^{-1} (G b) + \sum_{k=1}^{L} (y_k^o - H_k(G b))^T R_k^{-1} (y_k^o - H_k(G b)).
+\]
+
+Here, we define \( \delta x_0 = G b \) to relate the analysis increment to a binary vector \( b \).
+
+\section{Deriving the Expectation Value}
+The expectation value of the Hamiltonian is given by:
+
+\[
+\langle H \rangle = \langle \psi | H | \psi \rangle,
+\]
+
+where the quantum state \( |\psi\rangle \) is represented as:
+
+\[
+|\psi\rangle = \sum_{i=0}^{2^n-1} \alpha_i |i\rangle,
+\]
+
+with amplitudes defined as:
+
+\[
+\alpha_i = \frac{h_i}{\sqrt{\sum_{j} h_j^2}},
+\]
+
+where \( h_i \) is derived from the Hamiltonian contributions.
+
+\section{Substituting Amplitudes into the Hamiltonian}
+We express \( h_i \) in terms of \( b \):
+
+\[
+h_i = (G b)^T Q_0^{-1} (G b) + \sum_{k=1}^{L} (y_k^o - H_k(G b))^T R_k^{-1} (y_k^o - H_k(G b)).
+\]
+
+This shows how the amplitudes reflect the cost function's structure.
+
+\section{Minimizing the Expectation Value}
+To optimize the cost function, we minimize the expectation value:
+
+\[
+\min_b \langle H \rangle = \min_b \langle \psi | H | \psi \rangle.
+\]
+
+Using quantum optimization algorithms, such as the Quantum Approximate Optimization Algorithm (QAOA), allows us to find the optimal \( b \) that minimizes the cost function.
+
+\section*{Conclusion}
+The mapping of the 4DVAR cost function to a Hamiltonian framework enables the use of quantum computing techniques for optimization. By encoding the cost function into a quantum state via amplitude embedding, we leverage quantum algorithms to efficiently minimize the cost, thus enhancing data assimilation processes.
+
+\end{document}

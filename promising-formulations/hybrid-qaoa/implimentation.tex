@@ -1,0 +1,164 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{graphicx}
+
+\begin{document}
+
+\title{Use Case: Air Quality Monitoring}
+\author{Brian Recktenwall-Calvet}
+\date{October 2024}
+\maketitle
+
+\section{Objective}
+To predict pollution levels based on air quality data collected from various sensors in an urban area.
+
+\section{Data Collection}
+\begin{itemize}
+    \item \textbf{Variables}: Select relevant variables such as PM2.5, NOx, and Ozone levels.
+    \item \textbf{Spatial Resolution}: Define a 3D grid with dimensions \(X\), \(Y\), and \(Z\) to represent the spatial distribution of pollution.
+    \item \textbf{Temporal Resolution}: Gather hourly data over a 25-hour time window.
+\end{itemize}
+
+\textbf{Example Data Structure}:
+\noindent
+\begin{align*}
+    \text{Number of variables} & : V = 4 \quad (\text{PM2.5, NOx, Ozone, etc}) \\
+    \text{Grid Dimensions} & : X \times Y \times Z \quad (\text{e.g., } 10 \times 10 \times 5) \\
+    \text{Number of time steps} & : T = 25 \\
+    \text{Total data points} & : D = V \times (X \times Y \times Z) \times T.
+\end{align*}
+
+\subsection{Total Data Points}
+The total number of data points can be calculated as:
+\[
+m = T \times \text{Total grid points} \times V = 25 \times 500 \times 4.
+\]
+Calculating this gives:
+\[
+m = 25 \times 500 \times 4 = 50000 \text{ data points}.
+\]
+
+\subsubsection{Number of Qubits Needed}
+The number of qubits needed is:
+\[
+n = \lceil \log_2(m) \rceil = \lceil \log_2(50000) \rceil \approx 16.
+\]
+
+\subsection{Normalization}
+Normalize the data to a suitable range (e.g., [0, 1]):
+\[
+    \text{NormalizedData}[v, x, y, z, t] = \frac{\text{Data}[v, x, y, z, t] - \text{min}_v}{\text{max}_v - \text{min}_v}.
+\]
+
+\subsection{Vectorization}
+Flatten the normalized data into a vector:
+\[
+    \text{VectorizedData} = \text{reshape}(\text{NormalizedData}, [V \times (X \times Y \times Z) \times T, 1]).
+\]
+
+\subsection{Constructing the Cost Function Components}
+\begin{itemize}
+    \item \textbf{State Variables}:
+    \begin{itemize}
+        \item \(\delta x_0\): Analysis adjustment based on the analysis window.
+        \item \(x^b\): Background state.
+    \end{itemize}
+    
+    \item \textbf{Observation Variables}:
+    \begin{itemize}
+        \item \(y_k^o\): Observed data at time \(k\).
+        \item \(H_k(x^b + \delta x_0)\): Model output at time \(k\).
+    \end{itemize}
+    
+    \item \textbf{Covariance Matrices}:
+    \begin{itemize}
+        \item \(Q_0\): Background error covariance.
+        \item \(R_k\): Observation error covariance.
+    \end{itemize}
+\end{itemize}
+
+\section{Initial Forecast}
+Generate the initial forecast based on the background state \(x^b\):
+\[
+    F_k = H_k(x^b) \quad \text{for } k = 1, 2, \ldots, T.
+\]
+
+\subsection{Calculate Residuals}
+Compute the residuals between the initial forecasts and observations:
+\[
+    d_{1:L} = y_{1:L}^o - F_{1:L}.
+\]
+
+\section{Set Up Cost Function}
+Formulate the cost function:
+\[
+    J(\delta x_0) = \delta x_0^T Q_0^{-1} \delta x_0 + d_{1:L}^T R_{1:L}^{-1} d_{1:L}.
+\]
+
+\subsection{Minimize Cost Function Using QAOA}
+
+The optimization can be performed using the Quantum Approximate Optimization Algorithm (QAOA). Below are the detailed steps involved.
+
+\subsection{Hamiltonian Construction}
+Construct the Hamiltonian representing the cost function:
+\[
+    H = J(\delta x_0) = \delta x_0^T Q_0^{-1} \delta x_0 + \sum_{k=1}^{T} (y_k^o - H_k(x^b + \delta x_0))^T R_k^{-1} (y_k^o - H_k(x^b + \delta x_0)).
+\]
+
+\subsubsection{Parameter Initialization}
+Choose initial parameters for the QAOA circuit:
+\begin{itemize}
+    \item \textbf{Number of Layers \(p\)}: Determine the depth of the QAOA circuit.
+    \item \textbf{Parameters \(\gamma\) and \(\beta\)}: Initialize parameters for the unitary operators.
+\end{itemize}
+
+\subsubsection{Quantum Circuit Design}
+Design the QAOA circuit:
+\begin{itemize}
+    \item \textbf{Apply Phase Separator}:
+    \[
+        U(C) = e^{-i \gamma H}
+    \]
+
+    \item \textbf{Apply Mixing Operator}:
+    \[
+        U(B) = e^{-i \beta B},
+    \]
+    where \(B\) is a mixing Hamiltonian chosen to promote exploration of the solution space.
+\end{itemize}
+
+\subsubsection{QAOA Circuit Construction}
+Construct the QAOA circuit by alternating the application of the phase separator and the mixing operator:
+\[
+    U(\gamma, \beta) = (U(B) U(C))^p.
+\]
+
+\subsubsection{State Preparation}
+Prepare the initial state of the quantum system:
+\[
+    | \psi_0 \rangle = |0\rangle^{\otimes n},
+\]
+where \(n\) is the number of qubits.
+
+\subsubsection{Measurement}
+After executing the QAOA circuit, measure the quantum state:
+\begin{itemize}
+    \item \textbf{Classical Post-Processing}: Analyze measurement outcomes to estimate \(\delta x_0\).
+    \item \textbf{Cost Evaluation}: Evaluate the cost function \(J(\delta x_0)\) using classical outcomes.
+\end{itemize}
+
+\subsubsection{Parameter Optimization}
+Use a classical optimization algorithm (e.g., gradient descent, COBYLA) to optimize parameters \(\gamma\) and \(\beta\):
+\begin{align*}
+    \text{Minimize } & J(\delta x_0) \\
+    \text{with respect to } & \gamma, \beta.
+\end{align*}
+
+\section{Sensitivity Analysis or Linearization}
+Instead of directly evaluating \(H_k\) for the updated state, use sensitivity analysis or a linear approximation based on the initial forecast:
+\[
+    F_k^a = F_k + H_k(\delta x_0).
+\]
+If \(H_k\) is nonlinear, linearize it around \(x^b\) to estimate the adjustment’s impact.
+
+\end{document}
